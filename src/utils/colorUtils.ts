@@ -1,6 +1,66 @@
 export type RGB = [number, number, number];
 export type HSL = [number, number, number];
 
+const COLOR_NAMES: { [key: string]: string } = {
+  '#FF0000': 'Red', '#FF4500': 'Orange Red', '#FF6347': 'Tomato', '#FF7F50': 'Coral',
+  '#FFA500': 'Orange', '#FFD700': 'Gold', '#FFFF00': 'Yellow', '#FFFFE0': 'Light Yellow',
+  '#FFFACD': 'Lemon', '#F0E68C': 'Khaki', '#BDB76B': 'Dark Khaki', '#9ACD32': 'Yellow Green',
+  '#7CFC00': 'Lawn Green', '#00FF00': 'Lime', '#32CD32': 'Lime Green', '#228B22': 'Forest Green',
+  '#006400': 'Dark Green', '#008000': 'Green', '#2E8B57': 'Sea Green', '#3CB371': 'Medium Sea Green',
+  '#00FA9A': 'Medium Spring', '#00FF7F': 'Spring Green', '#40E0D0': 'Turquoise', '#20B2AA': 'Light Sea Green',
+  '#008B8B': 'Dark Cyan', '#00FFFF': 'Cyan', '#00CED1': 'Dark Turquoise', '#5F9EA0': 'Cadet Blue',
+  '#4682B4': 'Steel Blue', '#6495ED': 'Cornflower', '#00BFFF': 'Deep Sky Blue', '#1E90FF': 'Dodger Blue',
+  '#0000FF': 'Blue', '#0000CD': 'Medium Blue', '#00008B': 'Dark Blue', '#000080': 'Navy',
+  '#191970': 'Midnight Blue', '#4B0082': 'Indigo', '#6A5ACD': 'Slate Blue', '#7B68EE': 'Medium Slate Blue',
+  '#8A2BE2': 'Blue Violet', '#9400D3': 'Dark Violet', '#9932CC': 'Dark Orchid', '#BA55D3': 'Medium Orchid',
+  '#FF00FF': 'Magenta', '#FF1493': 'Deep Pink', '#FF69B4': 'Hot Pink', '#FFB6C1': 'Light Pink',
+  '#FFC0CB': 'Pink', '#DC143C': 'Crimson', '#B22222': 'Fire Brick', '#8B0000': 'Dark Red',
+  '#800000': 'Maroon', '#A52A2A': 'Brown', '#D2691E': 'Chocolate', '#CD853F': 'Peru',
+  '#DEB887': 'Burlywood', '#F4A460': 'Sandy Brown', '#D2B48C': 'Tan', '#BC8F8F': 'Rosy Brown',
+  '#FFE4C4': 'Bisque', '#FFDEAD': 'Navajo White', '#FFE4B5': 'Moccasin', '#FFEFD5': 'Papaya Whip',
+  '#FFFFFF': 'White', '#FFFAFA': 'Snow', '#F0FFF0': 'Honeydew', '#F5FFFA': 'Mint Cream',
+  '#F0FFFF': 'Azure', '#F0F8FF': 'Alice Blue', '#F8F8FF': 'Ghost White', '#FFF5EE': 'Seashell',
+  '#FDF5E6': 'Old Lace', '#FFFFF0': 'Ivory', '#FAFAD2': 'Light Goldenrod', '#FAF0E6': 'Linen',
+  '#E6E6FA': 'Lavender', '#D8BFD8': 'Thistle', '#DDA0DD': 'Plum', '#EE82EE': 'Violet',
+  '#C0C0C0': 'Silver', '#A9A9A9': 'Dark Gray', '#808080': 'Gray', '#696969': 'Dim Gray',
+  '#778899': 'Light Slate Gray', '#708090': 'Slate Gray', '#2F4F4F': 'Dark Slate Gray', '#000000': 'Black',
+};
+
+export function getColorName(rgb: RGB): string {
+  const hex = rgbToHex(rgb).toUpperCase();
+  if (COLOR_NAMES[hex]) return COLOR_NAMES[hex];
+  
+  const [h, s, l] = rgbToHsl(rgb);
+  
+  if (s < 10) {
+    if (l < 20) return 'Black';
+    if (l < 40) return 'Dark Gray';
+    if (l < 60) return 'Gray';
+    if (l < 80) return 'Light Gray';
+    return 'White';
+  }
+  
+  let hueName = '';
+  if (h < 15 || h >= 345) hueName = 'Red';
+  else if (h < 45) hueName = 'Orange';
+  else if (h < 75) hueName = 'Yellow';
+  else if (h < 105) hueName = 'Lime';
+  else if (h < 135) hueName = 'Green';
+  else if (h < 165) hueName = 'Teal';
+  else if (h < 195) hueName = 'Cyan';
+  else if (h < 225) hueName = 'Sky Blue';
+  else if (h < 255) hueName = 'Blue';
+  else if (h < 285) hueName = 'Purple';
+  else if (h < 315) hueName = 'Magenta';
+  else hueName = 'Pink';
+  
+  let modifier = '';
+  if (l < 30) modifier = 'Dark ';
+  else if (l > 70) modifier = 'Light ';
+  
+  return modifier + hueName;
+}
+
 export function rgbToHsl([r, g, b]: RGB): HSL {
   r /= 255;
   g /= 255;

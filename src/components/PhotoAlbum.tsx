@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import ColorThief from 'colorthief';
-import { sortByHue } from '@/utils/colorUtils';
+import { Copy } from 'lucide-react';
+import { sortByHue, rgbToHex, getColorName } from '@/utils/colorUtils';
 import type { RGB } from '@/utils/colorUtils';
 
 interface ImageData {
@@ -8,27 +9,112 @@ interface ImageData {
   city: string;
 }
 
-const NOVEMBER_IMAGES: ImageData[] = [
+const JANUARY_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
+  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Maldives' },
+  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'California' },
+  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Mountains' },
+  { url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=800&h=600&fit=crop', city: 'Ocean' },
   { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Swiss Alps' },
-  { url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop', city: 'Maldives' },
-  { url: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=600&fit=crop', city: 'San Francisco' },
-  { url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=600&fit=crop', city: 'Ireland' },
+];
+
+const FEBRUARY_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Greece' },
+  { url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=800&h=600&fit=crop', city: 'Beach' },
   { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
-  { url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop', city: 'Mount Fuji' },
+  { url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop', city: 'Malibu' },
+  { url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop', city: 'Maldives' },
+  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
+];
+
+const MARCH_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1489914099268-1dad649f76bf?w=800&h=600&fit=crop', city: 'Tokyo' },
+  { url: 'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop', city: 'Croatia' },
+  { url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&h=600&fit=crop', city: 'Countryside' },
+  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
+  { url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop', city: 'Austria' },
+  { url: 'https://images.unsplash.com/photo-1532978379173-523e16f371f2?w=800&h=600&fit=crop', city: 'Thailand' },
+];
+
+const APRIL_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=800&h=600&fit=crop', city: 'Paris' },
+  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
+  { url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=600&fit=crop', city: 'Lake' },
+  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'California' },
+  { url: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?w=800&h=600&fit=crop', city: 'Mountains' },
   { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&h=600&fit=crop', city: 'Bali' },
+];
+
+const MAY_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=800&h=600&fit=crop', city: 'Beach' },
+  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Valley' },
+  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Ocean' },
+  { url: 'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=800&h=600&fit=crop', city: 'Morocco' },
+  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Alps' },
+  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Greece' },
+];
+
+const JUNE_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
+  { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&h=600&fit=crop', city: 'Bali' },
+  { url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop', city: 'Maldives' },
+  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
+  { url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=800&h=600&fit=crop', city: 'Coast' },
+  { url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop', city: 'Malibu' },
+];
+
+const JULY_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'San Francisco' },
+  { url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=800&h=600&fit=crop', city: 'Beach' },
+  { url: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=800&h=600&fit=crop', city: 'Paris' },
+  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
+  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Tropics' },
+  { url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&h=600&fit=crop', city: 'Fields' },
+];
+
+const AUGUST_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?w=800&h=600&fit=crop', city: 'Mountains' },
+  { url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=800&h=600&fit=crop', city: 'Coast' },
+  { url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=600&fit=crop', city: 'Lake' },
+  { url: 'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop', city: 'Croatia' },
+  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Valley' },
+  { url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop', city: 'Austria' },
+];
+
+const SEPTEMBER_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop', city: 'Malibu' },
+  { url: 'https://images.unsplash.com/photo-1532978379173-523e16f371f2?w=800&h=600&fit=crop', city: 'Thailand' },
+  { url: 'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=800&h=600&fit=crop', city: 'Morocco' },
+  { url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=800&h=600&fit=crop', city: 'Ocean' },
+  { url: 'https://images.unsplash.com/photo-1489914099268-1dad649f76bf?w=800&h=600&fit=crop', city: 'Japan' },
+  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
 ];
 
 const OCTOBER_IMAGES: ImageData[] = [
   { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
   { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Swiss Alps' },
   { url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop', city: 'Maldives' },
-  { url: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&h=600&fit=crop', city: 'San Francisco' },
-  { url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=600&fit=crop', city: 'Ireland' },
+  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'California' },
+  { url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&h=600&fit=crop', city: 'Countryside' },
   { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
-  { url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop', city: 'Mount Fuji' },
+];
+
+const NOVEMBER_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Swiss Alps' },
+  { url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=800&h=600&fit=crop', city: 'Beach' },
+  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Mountains' },
+  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Tropics' },
+  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
   { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&h=600&fit=crop', city: 'Bali' },
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
-  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Dolomites' },
+];
+
+const DECEMBER_IMAGES: ImageData[] = [
+  { url: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?w=800&h=600&fit=crop', city: 'Mountains' },
+  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
+  { url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop', city: 'Austria' },
+  { url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=800&h=600&fit=crop', city: 'Coast' },
+  { url: 'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=800&h=600&fit=crop', city: 'Morocco' },
+  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Greece' },
 ];
 
 export interface MonthAlbum {
@@ -38,18 +124,19 @@ export interface MonthAlbum {
 }
 
 export function generateAlbums(): MonthAlbum[] {
-  const currentDate = new Date();
   return [
-    {
-      month: 'November',
-      year: currentDate.getFullYear(),
-      images: NOVEMBER_IMAGES,
-    },
-    {
-      month: 'October',
-      year: currentDate.getFullYear(),
-      images: OCTOBER_IMAGES,
-    },
+    { month: 'December', year: 2025, images: DECEMBER_IMAGES },
+    { month: 'November', year: 2025, images: NOVEMBER_IMAGES },
+    { month: 'October', year: 2025, images: OCTOBER_IMAGES },
+    { month: 'September', year: 2025, images: SEPTEMBER_IMAGES },
+    { month: 'August', year: 2025, images: AUGUST_IMAGES },
+    { month: 'July', year: 2025, images: JULY_IMAGES },
+    { month: 'June', year: 2025, images: JUNE_IMAGES },
+    { month: 'May', year: 2025, images: MAY_IMAGES },
+    { month: 'April', year: 2025, images: APRIL_IMAGES },
+    { month: 'March', year: 2025, images: MARCH_IMAGES },
+    { month: 'February', year: 2025, images: FEBRUARY_IMAGES },
+    { month: 'January', year: 2025, images: JANUARY_IMAGES },
   ];
 }
 
@@ -139,9 +226,9 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted }: GradientImage
   const baseColor = colors?.[0] || [30, 58, 138];
 
   return (
-    <div className="relative aspect-[4/3] overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
+    <div className="relative aspect-video overflow-hidden rounded-[6px] shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
       {/* Mesh Gradient Background (default) */}
-      <div className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-0">
+      <div className="absolute inset-0 transition-opacity duration-500 ease-in-out group-hover:opacity-0">
         {/* Base background */}
         <div 
           className="absolute inset-0"
@@ -183,7 +270,7 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted }: GradientImage
       </div>
       
       {/* Real Image + City Name (shown on hover) */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out">
         <img
           ref={imgRef}
           src={imageUrl}
@@ -192,8 +279,21 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted }: GradientImage
           loading="lazy"
           crossOrigin="anonymous"
         />
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent flex justify-between items-end">
           <span className="text-white text-sm font-medium">{city}</span>
+          {colors && colors.length > 0 && (
+            <button
+              className="flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white/10 hover:bg-white/20 text-white text-xs transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                const hexCodes = colors.slice(0, 3).map(c => rgbToHex(c)).join(', ');
+                navigator.clipboard.writeText(hexCodes);
+              }}
+            >
+              <Copy className="w-3 h-3" />
+              Copy hex
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -230,19 +330,41 @@ function MonthSection({ album }: { album: MonthAlbum }) {
   return (
     <div className="space-y-4">
       {/* Month Header with Colors */}
-      <div className="flex items-center gap-4">
-        <h2 className="text-3xl md:text-4xl font-semibold text-white drop-shadow-lg">
-          {album.month} {album.year}
+      <div className="flex items-center justify-between">
+        <h2 className="text-[28px] font-semibold text-white drop-shadow-lg">
+          {album.month}
         </h2>
         {monthColors.length > 0 && (
-          <div className="flex gap-1.5">
-            {monthColors.map((color, i) => (
-              <div
-                key={i}
-                className="w-4 h-4 rounded-full shadow-sm"
-                style={{ backgroundColor: `rgb(${color.join(',')})` }}
-              />
-            ))}
+          <div className="flex items-center gap-3">
+            <span className="text-[20px] text-zinc-400">Top month colors</span>
+            <div className="flex gap-2">
+              {monthColors.map((color, i) => {
+                const hex = rgbToHex(color);
+                const name = getColorName(color);
+                return (
+                  <div
+                    key={i}
+                    className="relative group"
+                  >
+                    <div
+                      className="w-6 h-6 rounded-[6px] shadow-sm cursor-pointer hover:scale-125 transition-transform"
+                      style={{ 
+                        backgroundColor: `rgb(${color.join(',')})`,
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                      }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(hex);
+                      }}
+                      title={`${name} - ${hex}`}
+                    />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/90 text-white text-xs rounded-[6px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      <div className="font-medium">{name}</div>
+                      <div className="text-zinc-400">{hex}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

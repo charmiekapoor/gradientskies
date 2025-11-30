@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { RGB, GradientType } from '@/utils/colorUtils';
@@ -7,9 +7,10 @@ import type { RGB, GradientType } from '@/utils/colorUtils';
 interface GradientPreviewProps {
   gradient: string;
   cssCode: string;
-  colors: RGB[];
+  colors: RGB[] | null;
   gradientType: GradientType;
   blur: number;
+  hasImage: boolean;
 }
 
 const blobPositions = [
@@ -21,7 +22,7 @@ const blobPositions = [
   { top: '50%', left: '-5%', width: '45%', height: '45%', delay: '2.5s', duration: '12s' },
 ];
 
-export function GradientPreview({ gradient, cssCode, colors, gradientType, blur }: GradientPreviewProps) {
+export function GradientPreview({ gradient, cssCode, colors, gradientType, blur, hasImage }: GradientPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
@@ -49,13 +50,64 @@ export function GradientPreview({ gradient, cssCode, colors, gradientType, blur 
     setTimeout(() => setCopied(false), 2000);
   }, [cssCode]);
 
+  const handleDownload = useCallback(() => {
+    if (!colors) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1920;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    colors.forEach((color, i) => {
+      gradient.addColorStop(i / (colors.length - 1), `rgb(${color.join(',')})`);
+    });
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = 'gradient.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }, [colors]);
+
   // Generate shadow colors from gradient colors
-  const shadowColor1 = colors[0] ? `rgba(${colors[0].join(',')}, 0.4)` : 'rgba(99, 102, 241, 0.4)';
-  const shadowColor2 = colors[2] ? `rgba(${colors[2].join(',')}, 0.3)` : 'rgba(168, 85, 247, 0.3)';
-  const shadowColor3 = colors[4] ? `rgba(${colors[4].join(',')}, 0.2)` : 'rgba(236, 72, 153, 0.2)';
+  const shadowColor1 = colors?.[0] ? `rgba(${colors[0].join(',')}, 0.4)` : 'rgba(99, 102, 241, 0.4)';
+  const shadowColor2 = colors?.[2] ? `rgba(${colors[2].join(',')}, 0.3)` : 'rgba(168, 85, 247, 0.3)';
+  const shadowColor3 = colors?.[4] ? `rgba(${colors[4].join(',')}, 0.2)` : 'rgba(236, 72, 153, 0.2)';
+
+  const renderPlaceholder = () => (
+    <div className="relative w-full h-full overflow-hidden bg-zinc-900 flex items-center justify-center">
+      {/* Shimmer gradient background */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(90deg, rgba(39,39,42,1) 0%, rgba(63,63,70,1) 50%, rgba(39,39,42,1) 100%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 2s ease-in-out infinite',
+        }}
+      />
+      {/* Subtle color accents */}
+      <div 
+        className="absolute inset-0 opacity-30"
+        style={{
+          background: 'radial-gradient(circle at 30% 40%, rgba(139, 92, 246, 0.3) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(249, 115, 22, 0.2) 0%, transparent 50%)',
+        }}
+      />
+      <p className="relative text-zinc-500 text-sm font-medium">Your gradient will be generated here</p>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
+    </div>
+  );
 
   const renderMeshGradient = () => {
-    const baseColor = colors[0] || [99, 102, 241];
+    const baseColor = colors?.[0] || [99, 102, 241];
     
     return (
       <div className="relative w-full h-full overflow-hidden">
@@ -68,7 +120,7 @@ export function GradientPreview({ gradient, cssCode, colors, gradientType, blur 
         />
         
         {/* Animated blobs */}
-        {colors.map((color, index) => {
+        {colors?.map((color, index) => {
           const pos = blobPositions[index] || blobPositions[0];
           return (
             <div
@@ -152,23 +204,24 @@ export function GradientPreview({ gradient, cssCode, colors, gradientType, blur 
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="flex-1 min-h-[300px] perspective-1000"
+        className="flex-1 min-h-[420px] perspective-1000"
         style={{ perspective: '1000px' }}
       >
         <Card 
-          className="w-full h-full rounded-2xl overflow-hidden border-0 transition-transform duration-200 ease-out"
+          className="w-full h-full rounded-2xl overflow-hidden border-0 transition-transform duration-500 ease-out"
           style={{
-            transform: `rotateY(${mousePosition.x}deg) rotateX(${-mousePosition.y}deg) translateZ(10px)`,
+            transform: `rotateY(${mousePosition.x * 0.3}deg) rotateX(${-mousePosition.y * 0.3}deg)`,
             boxShadow: `
               0 10px 30px -10px ${shadowColor1},
               0 20px 50px -15px ${shadowColor2},
               0 30px 70px -20px ${shadowColor3},
               0 0 80px -20px ${shadowColor1}
             `,
-            animation: 'levitate 4s ease-in-out infinite',
           }}
         >
-          {gradientType === 'mesh' ? (
+          {!hasImage ? (
+            renderPlaceholder()
+          ) : gradientType === 'mesh' ? (
             renderMeshGradient()
           ) : (
             <div className="relative w-full h-full">
@@ -193,25 +246,37 @@ export function GradientPreview({ gradient, cssCode, colors, gradientType, blur 
         </Card>
       </div>
       
-      <Card className="bg-zinc-900/80 backdrop-blur-sm border-zinc-800 overflow-hidden mt-4">
-        <div className="p-3 flex items-center justify-between gap-3">
-          <code className="text-xs text-emerald-400 truncate flex-1 font-mono">
-            {cssCode}
-          </code>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            className="text-zinc-400 hover:text-white hover:bg-zinc-800 shrink-0 h-8"
-          >
-            {copied ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
-      </Card>
+      {hasImage && (
+        <Card className="bg-zinc-900/80 backdrop-blur-sm border-zinc-800 overflow-hidden mt-4">
+          <div className="p-3 flex items-center justify-between gap-3">
+            <code className="text-xs text-emerald-400 truncate flex-1 font-mono">
+              {cssCode}
+            </code>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownload}
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800 shrink-0 h-8"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800 shrink-0 h-8"
+              >
+                {copied ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
