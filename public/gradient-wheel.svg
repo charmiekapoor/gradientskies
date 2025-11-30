@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff0000"/>
+      <stop offset="100%" stop-color="#ff8000"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8000"/>
+      <stop offset="100%" stop-color="#ffff00"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffff00"/>
+      <stop offset="100%" stop-color="#00ff00"/>
+    </linearGradient>
+    <linearGradient id="g4" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00ff00"/>
+      <stop offset="100%" stop-color="#00ffff"/>
+    </linearGradient>
+    <linearGradient id="g5" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#00ffff"/>
+      <stop offset="100%" stop-color="#0080ff"/>
+    </linearGradient>
+    <linearGradient id="g6" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#0080ff"/>
+      <stop offset="100%" stop-color="#8000ff"/>
+    </linearGradient>
+    <linearGradient id="g7" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8000ff"/>
+      <stop offset="100%" stop-color="#ff00ff"/>
+    </linearGradient>
+    <linearGradient id="g8" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff00ff"/>
+      <stop offset="100%" stop-color="#ff0000"/>
+    </linearGradient>
+  </defs>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g1)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="0"/>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g2)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="-11.78"/>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g3)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="-23.56"/>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g4)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="-35.34"/>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g5)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="-47.12"/>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g6)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="-58.9"/>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g7)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="-70.68"/>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="url(#g8)" stroke-width="3" stroke-dasharray="11.78 82.46" stroke-dashoffset="-82.46"/>
+  <circle cx="16" cy="16" r="6" fill="white"/>
+</svg>
