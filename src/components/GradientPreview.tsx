@@ -392,8 +392,8 @@ export function GradientPreview({
             <div className="p-4 space-y-4">
               {/* Colors */}
               <div>
-                <label className="text-xs text-zinc-400 mb-2 block">Tap on the colors you want to remove.</label>
-                <div className="flex gap-2 items-center justify-between">
+                <label className="text-[14px] text-zinc-400 mb-2 block">Tap on the colors you want to remove.</label>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex gap-2">
                     {allColors?.slice(0, 6).map((color, index) => {
                       const brightColor = boostColor(color, 30, 25, 20);
@@ -418,7 +418,7 @@ export function GradientPreview({
                   </div>
                   <button
                     onClick={onRandomize}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-[6px] border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors text-sm"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-[6px] border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors text-[14px] w-fit"
                     aria-label="Randomize gradient"
                   >
                     <Shuffle className="w-4 h-4" />
@@ -430,8 +430,8 @@ export function GradientPreview({
               {/* Blur Slider */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs text-zinc-400">Blur</label>
-                  <span className="text-xs text-zinc-500">{blur}px</span>
+                  <label className="text-[14px] text-zinc-400">Blur</label>
+                  <span className="text-[14px] text-zinc-500">{blur}px</span>
                 </div>
                 <input
                   type="range"
@@ -446,8 +446,8 @@ export function GradientPreview({
               {/* Noise Slider */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs text-zinc-400">Noise</label>
-                  <span className="text-xs text-zinc-500">{noise}%</span>
+                  <label className="text-[14px] text-zinc-400">Noise</label>
+                  <span className="text-[14px] text-zinc-500">{noise}%</span>
                 </div>
                 <input
                   type="range"

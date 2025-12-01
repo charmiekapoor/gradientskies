@@ -397,8 +397,8 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted, gradientMethod 
         />
       </div>
       
-      {/* Real Image + City Name (shown on hover) */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ease-out">
+      {/* Real Image + City Name (shown on hover/tap) */}
+      <div className={`absolute inset-0 transition-opacity duration-150 ease-out ${showImage ? 'opacity-100' : 'opacity-0'} md:opacity-0 md:group-hover:opacity-100`}>
         <img
           ref={imgRef}
           src={imageUrl}
@@ -407,7 +407,12 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted, gradientMethod 
           loading="lazy"
           crossOrigin="anonymous"
         />
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent flex justify-between items-end">
+        {/* Mobile: City name top left */}
+        <div className="absolute top-2 left-2 md:hidden">
+          <span className="text-white text-[12px] font-medium bg-black/30 px-2 py-1 rounded-[4px] backdrop-blur-sm">{city}</span>
+        </div>
+        {/* Desktop: City name bottom left with copy button */}
+        <div className="hidden md:flex absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent justify-between items-end">
           <span className="text-white text-sm font-medium">{city}</span>
           {colors && colors.length > 0 && (
             <button
