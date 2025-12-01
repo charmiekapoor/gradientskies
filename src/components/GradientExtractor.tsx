@@ -144,9 +144,9 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
         }}
       />
 
-      {/* Gradient Trail - Fairy Wand Glow */}
+      {/* Gradient Trail - Fairy Wand Glow (Desktop only) */}
       {trailPoints.length > 0 && (
-        <svg className="fixed inset-0 pointer-events-none z-50" style={{ width: '100vw', height: '100vh' }}>
+        <svg className="fixed inset-0 pointer-events-none z-50 hidden md:block" style={{ width: '100vw', height: '100vh' }}>
           <defs>
             <linearGradient id="trailGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="rgba(100, 180, 255, 0)" />

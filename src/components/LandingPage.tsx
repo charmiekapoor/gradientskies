@@ -21,6 +21,17 @@ function getWeatherIcon() {
   return <Cloud className="w-5 h-5 text-zinc-400" />;
 }
 
+function formatTimeToSunset(mins: number): string {
+  const totalMins = Math.max(0, mins);
+  const hours = Math.floor(totalMins / 60);
+  const remainingMins = totalMins % 60;
+  
+  if (hours > 0) {
+    return `${hours}h ${remainingMins}m to sunset`;
+  }
+  return `${totalMins} mins to sunset`;
+}
+
 export function LandingPage() {
   const [albums, setAlbums] = useState<MonthAlbum[]>([]);
   const [trailPoints, setTrailPoints] = useState<TrailPoint[]>([]);
@@ -63,21 +74,28 @@ export function LandingPage() {
     const fetchWeather = async () => {
       try {
         const res = await fetch(
-          'https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,weather_code&daily=sunset&timezone=Asia/Kolkata'
+          'https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,weather_code&daily=sunset&timezone=Asia/Kolkata&forecast_days=2'
         );
         const data = await res.json();
         
-        // Parse sunset time
-        const sunsetTime = data.daily?.sunset?.[0] || '';
-        const sunsetDate = new Date(sunsetTime);
+        // Parse sunset times (today and tomorrow)
+        const todaySunset = data.daily?.sunset?.[0] || '';
+        const tomorrowSunset = data.daily?.sunset?.[1] || '';
+        const todaySunsetDate = new Date(todaySunset);
+        const tomorrowSunsetDate = new Date(tomorrowSunset);
         const now = new Date();
         
-        // Calculate minutes to sunset
-        const diffMs = sunsetDate.getTime() - now.getTime();
-        const minsToSunset = Math.round(diffMs / 60000);
+        // Always use next upcoming sunset
+        let targetSunset = todaySunsetDate;
+        if (now.getTime() >= todaySunsetDate.getTime()) {
+          targetSunset = tomorrowSunsetDate;
+        }
         
-        // Format sunset time in AM/PM
-        const sunsetFormatted = sunsetDate.toLocaleTimeString('en-US', {
+        const diffMs = targetSunset.getTime() - now.getTime();
+        const minsToSunset = Math.max(0, Math.round(diffMs / 60000));
+        
+        // Format the next sunset time in AM/PM
+        const sunsetFormatted = targetSunset.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
           hour12: true,
@@ -118,9 +136,9 @@ export function LandingPage() {
         }}
       />
 
-      {/* Gradient Trail - Fairy Wand Glow */}
+      {/* Gradient Trail - Fairy Wand Glow (Desktop only) */}
       {trailPoints.length > 0 && (
-        <svg className="fixed inset-0 pointer-events-none z-50" style={{ width: '100vw', height: '100vh' }}>
+        <svg className="fixed inset-0 pointer-events-none z-50 hidden md:block" style={{ width: '100vw', height: '100vh' }}>
           <defs>
             <linearGradient id="trailGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="rgba(100, 180, 255, 0)" />
@@ -177,14 +195,14 @@ export function LandingPage() {
 
 
       {/* Sticky Header for Mobile */}
-      <header className="sticky top-0 z-50 bg-[hsl(222,47%,5%)]/80 backdrop-blur-md border-b border-white/5 md:hidden">
+      <header className="sticky top-0 z-50 bg-[hsl(222,47%,5%)]/80 backdrop-blur-md md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <img src="/gradient-wheel.png" alt="Logo" className="w-8 h-8" />
           <a
             href="/?view=extractor"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 hover:border-white/20 backdrop-blur-sm transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-white/5 border border-white/5 text-white text-sm hover:bg-white/10 hover:border-white/20 backdrop-blur-sm transition-colors"
           >
             <CloudSun className="w-3.5 h-3.5" />
             <span>Create your own gradient</span>
@@ -207,15 +225,26 @@ export function LandingPage() {
               >
                 Colors of the Sky
               </h1>
-              <p className="text-lg md:text-xl text-zinc-400">
-                A reminder that the sky changes every minute. Pause, look up and enjoy its colors.
-              </p>
+              {weather && (
+                <div className="flex items-center gap-2 text-zinc-400 text-[16px]">
+                  <span>Bangalore</span>
+                  <span>•</span>
+                  {getWeatherIcon()}
+                  <span>{weather.temperature}°C</span>
+                  <span>•</span>
+                  <Sun className="w-5 h-5 text-zinc-400" />
+                  <span>{weather.sunset}</span>
+                  <span className="text-zinc-500">
+                    ({formatTimeToSunset(weather.minsToSunset)})
+                  </span>
+                </div>
+              )}
             </div>
             <a
               href="/?view=extractor"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 backdrop-blur-sm transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-white/5 border border-white/5 text-white hover:bg-white/10 hover:border-white/20 backdrop-blur-sm transition-colors"
             >
               <CloudSun className="w-4 h-4" />
               <span>Create your own gradient</span>
@@ -225,7 +254,7 @@ export function LandingPage() {
           {/* Mobile Title */}
           <div className="md:hidden mb-8">
             <h1 
-              className="text-[48px] mb-2 drop-shadow-2xl bg-clip-text text-transparent pb-1 cursor-default title-gradient"
+              className="text-[44px] mb-2 drop-shadow-2xl bg-clip-text text-transparent pb-1 cursor-default title-gradient"
               style={{
                 fontFamily: '"Boldonse", sans-serif',
                 letterSpacing: '1px',
@@ -233,9 +262,20 @@ export function LandingPage() {
             >
               Colors of the Sky
             </h1>
-            <p className="text-base text-zinc-400">
-              A reminder that the sky changes every minute. Pause, look up and enjoy its colors.
-            </p>
+            {weather && (
+              <div className="flex items-center gap-2 text-zinc-400 text-[15px]">
+                <span>Bangalore</span>
+                <span>•</span>
+                {getWeatherIcon()}
+                <span>{weather.temperature}°C</span>
+                <span>•</span>
+                <Sun className="w-5 h-5 text-zinc-400" />
+                <span>{weather.sunset}</span>
+                <span className="text-zinc-500 whitespace-nowrap">
+                  ({formatTimeToSunset(weather.minsToSunset)})
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Divider */}
@@ -245,7 +285,7 @@ export function LandingPage() {
 
           {/* Footer */}
           <footer className="mt-20 py-8 border-t border-white/10">
-            <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex justify-center">
               <p className="text-zinc-400 text-[15px] md:text-[16px]">
                 Captured and created by sunset enthusiast,{' '}
                 <a
@@ -257,24 +297,6 @@ export function LandingPage() {
                   Charmie Kapoor
                 </a>
               </p>
-              {weather && (
-                <div className="flex items-center gap-2 text-zinc-400 text-[15px] md:text-[16px] whitespace-nowrap">
-                  <span>Bangalore</span>
-                  <span>•</span>
-                  {getWeatherIcon()}
-                  <span>{weather.temperature}°C</span>
-                  <span>•</span>
-                  <Sun className="w-5 h-5 text-zinc-400" />
-                  <span>{weather.sunset}</span>
-                  <span className="text-zinc-500 whitespace-nowrap">
-                    ({weather.minsToSunset > 0 
-                      ? `${weather.minsToSunset} mins to sunset`
-                      : weather.minsToSunset > -60 
-                        ? 'sunset now!' 
-                        : 'after sunset'})
-                  </span>
-                </div>
-              )}
             </div>
           </footer>
         </div>
