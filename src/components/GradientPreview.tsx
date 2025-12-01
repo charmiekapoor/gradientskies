@@ -4,8 +4,6 @@ import { Card } from '@/components/ui/card';
 import { boostColor, rgbToHex, type RGB, type GradientType } from '@/utils/colorUtils';
 
 interface GradientPreviewProps {
-  gradient: string;
-  cssCode: string;
   colors: RGB[] | null;
   allColors: RGB[] | null;
   gradientType: GradientType;
@@ -29,9 +27,13 @@ const blobPositions = [
   { top: '50%', left: '-5%', width: '45%', height: '45%', delay: '2.5s', duration: '12s' },
 ];
 
+// Seeded random function for deterministic randomness
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
 export function GradientPreview({ 
-  gradient, 
-  cssCode, 
   colors, 
   allColors,
   gradientType, 
@@ -143,12 +145,10 @@ export function GradientPreview({
 
   // Randomized blob positions - big variation when randomSeed changes
   const randomizedPositions = useMemo(() => {
-    // Use randomSeed to trigger recalculation
-    const seed = randomSeed;
     return blobPositions.map((pos, i) => {
-      // Create big variation positions across the entire canvas
-      const randomTop = Math.random() * 120 - 40; // -40% to 80%
-      const randomLeft = Math.random() * 120 - 40; // -40% to 80%
+      // Create big variation positions across the entire canvas using seeded random
+      const randomTop = seededRandom(randomSeed + i * 100) * 120 - 40; // -40% to 80%
+      const randomLeft = seededRandom(randomSeed + i * 100 + 50) * 120 - 40; // -40% to 80%
       return {
         ...pos,
         top: `${randomTop}%`,
@@ -157,25 +157,25 @@ export function GradientPreview({
         bottom: undefined,
       };
     });
-  }, [randomSeed]); // Only regenerate when randomSeed changes
+  }, [randomSeed]);
   
   // Stable blob sizes - only change on randomSeed
   const blobSizes = useMemo(() => {
-    return [0, 1, 2, 3, 4, 5].map(() => 40 + Math.random() * 50); // 40-90%
+    return [0, 1, 2, 3, 4, 5].map((i) => 40 + seededRandom(randomSeed + i * 200) * 50); // 40-90%
   }, [randomSeed]);
   
   // Randomized base gradient positions - change on randomSeed
   const baseGradientPositions = useMemo(() => {
     return [
-      { x: 10 + Math.random() * 30, y: 10 + Math.random() * 40 },
-      { x: 60 + Math.random() * 30, y: 50 + Math.random() * 40 },
-      { x: 30 + Math.random() * 40, y: 70 + Math.random() * 25 },
+      { x: 10 + seededRandom(randomSeed + 300) * 30, y: 10 + seededRandom(randomSeed + 301) * 40 },
+      { x: 60 + seededRandom(randomSeed + 302) * 30, y: 50 + seededRandom(randomSeed + 303) * 40 },
+      { x: 30 + seededRandom(randomSeed + 304) * 40, y: 70 + seededRandom(randomSeed + 305) * 25 },
     ];
   }, [randomSeed]);
   
   // Randomized color weights/opacity for each blob
   const colorWeights = useMemo(() => {
-    return [0, 1, 2, 3, 4, 5].map(() => 0.5 + Math.random() * 0.5); // 0.5-1.0
+    return [0, 1, 2, 3, 4, 5].map((i) => 0.5 + seededRandom(randomSeed + i * 400) * 0.5); // 0.5-1.0
   }, [randomSeed]);
 
   const renderMeshGradient = () => {

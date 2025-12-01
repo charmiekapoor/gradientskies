@@ -44,6 +44,7 @@ export function PixelatedPreview({ colors, imageData }: PixelatedPreviewProps) {
   // Process image when imageData, colors, or targetPixels change
   useEffect(() => {
     if (!imageData || colors.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPixelatedCanvas(null);
       setDimensions({ width: 0, height: 0 });
       return;

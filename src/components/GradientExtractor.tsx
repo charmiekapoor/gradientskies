@@ -1,10 +1,9 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ArrowLeft, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, CloudSun } from 'lucide-react';
 import { ImageUploader } from '@/components/ImageUploader';
 import { GradientPreview } from '@/components/GradientPreview';
 import {
   applyHarmonyMode,
-  rgbToHex,
   type RGB,
   type GradientType,
 } from '@/utils/colorUtils';
@@ -30,8 +29,6 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
   const [colors, setColors] = useState<RGB[] | null>(null);
   const [allColors, setAllColors] = useState<RGB[] | null>(null);
   const [activeColorIndices, setActiveColorIndices] = useState<number[]>([0, 1, 2, 3, 4]);
-  const [positions] = useState<number[]>([0, 20, 40, 60, 80, 100]);
-  const [direction] = useState('to right');
   const [gradientType, setGradientType] = useState<GradientType>('mesh');
   const [blur, setBlur] = useState<number>(20);
   const [noise, setNoise] = useState<number>(50);
@@ -49,34 +46,9 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
       .catch(() => {});
   }, []);
 
-  const { gradient, cssCode } = useMemo(() => {
-    if (!colors) return { gradient: '', cssCode: '' };
-    
-    const colorStops = colors
-      .map((c, i) => `rgb(${c.join(', ')}) ${positions[i]}%`)
-      .join(', ');
 
-    if (gradientType === 'radial') {
-      return {
-        gradient: `radial-gradient(circle, ${colorStops})`,
-        cssCode: `radial-gradient(circle, ${colorStops})`,
-      };
-    }
 
-    if (gradientType === 'mesh') {
-      return {
-        gradient: `linear-gradient(${direction}, ${colorStops})`,
-        cssCode: `/* Mesh gradient with noise - 6 colors */`,
-      };
-    }
-
-    return {
-      gradient: `linear-gradient(${direction}, ${colorStops})`,
-      cssCode: `linear-gradient(${direction}, ${colorStops})`,
-    };
-  }, [colors, positions, direction, gradientType]);
-
-  const handleColorsExtracted = useCallback((gradientColors: RGB[], extractedAllColors: RGB[], _imageData: string | null) => {
+  const handleColorsExtracted = useCallback((gradientColors: RGB[], extractedAllColors: RGB[]) => {
     const processedColors = applyHarmonyMode(gradientColors, 'original');
     setColors(processedColors);
     setAllColors(extractedAllColors.slice(0, 6));
@@ -148,8 +120,6 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
           
           {/* Right: Gradient Preview */}
           <GradientPreview 
-            gradient={gradient} 
-            cssCode={cssCode} 
             colors={activeColors}
             allColors={allColors}
             gradientType={gradientType}

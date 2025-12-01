@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PhotoAlbum, fetchAlbums } from './PhotoAlbum';
-import type { MonthAlbum } from './PhotoAlbum';
+import { PhotoAlbum } from './PhotoAlbum';
+import { fetchAlbums } from '@/utils/albumUtils';
+import type { MonthAlbum } from '@/utils/albumUtils';
 import { CloudSun, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog } from 'lucide-react';
 
 interface Sparkle {

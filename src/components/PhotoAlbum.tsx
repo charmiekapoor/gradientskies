@@ -3,31 +3,11 @@ import ColorThief from 'colorthief';
 import { Copy } from 'lucide-react';
 import { rgbToHex, saturateColor } from '@/utils/colorUtils';
 import type { RGB } from '@/utils/colorUtils';
+import type { MonthAlbum } from '@/utils/albumUtils';
 
 interface ColorWithWeight {
   color: RGB;
   weight: number;
-}
-
-interface ImageData {
-  url: string;
-  city: string;
-}
-
-interface ManifestImage {
-  file: string;
-  location: string;
-}
-
-interface Manifest {
-  [key: string]: ManifestImage[];
-}
-
-export interface MonthAlbum {
-  month: string;
-  monthKey: string;
-  year: number;
-  images: ImageData[];
 }
 
 const MONTH_COLORS: Record<string, { color: RGB; name: string }> = {
@@ -44,43 +24,6 @@ const MONTH_COLORS: Record<string, { color: RGB; name: string }> = {
   nov: { color: [135, 206, 235], name: 'Sky Whisper' },
   dec: { color: [220, 20, 60], name: 'Crimson Glow' },
 };
-
-const MONTH_ORDER = [
-  { name: 'December', key: 'dec' },
-  { name: 'November', key: 'nov' },
-  { name: 'October', key: 'oct' },
-  { name: 'September', key: 'sep' },
-  { name: 'August', key: 'aug' },
-  { name: 'July', key: 'jul' },
-  { name: 'June', key: 'jun' },
-  { name: 'May', key: 'may' },
-  { name: 'April', key: 'apr' },
-  { name: 'March', key: 'mar' },
-  { name: 'February', key: 'feb' },
-  { name: 'January', key: 'jan' },
-];
-
-export async function fetchAlbums(): Promise<MonthAlbum[]> {
-  try {
-    const response = await fetch('/sunsets/manifest.json');
-    const manifest: Manifest = await response.json();
-    
-    return MONTH_ORDER
-      .filter(m => manifest[m.key] && manifest[m.key].length > 0)
-      .map(m => ({
-        month: m.name,
-        monthKey: m.key,
-        year: 2025,
-        images: manifest[m.key].slice(0, 10).map(img => ({
-          url: `/sunsets/${img.file}`,
-          city: img.location,
-        })),
-      }));
-  } catch (error) {
-    console.error('Failed to load manifest:', error);
-    return [];
-  }
-}
 
 type GradientMethod = 'sky-high-sat';
 
