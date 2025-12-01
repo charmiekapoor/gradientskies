@@ -263,14 +263,14 @@ export function LandingPage() {
               Colors of the Sky
             </h1>
             {weather && (
-              <div className="flex items-center gap-2 text-zinc-400 text-[15px]">
-                <span>Bangalore</span>
+              <div className="flex items-center gap-2 text-zinc-400 text-[15px] flex-wrap">
+                <span className="whitespace-nowrap">Bangalore</span>
                 <span>•</span>
                 {getWeatherIcon()}
-                <span>{weather.temperature}°C</span>
+                <span className="whitespace-nowrap">{weather.temperature}°C</span>
                 <span>•</span>
                 <Sun className="w-5 h-5 text-zinc-400" />
-                <span>{weather.sunset}</span>
+                <span className="whitespace-nowrap">{weather.sunset}</span>
                 <span className="text-zinc-500 whitespace-nowrap">
                   ({formatTimeToSunset(weather.minsToSunset)})
                 </span>
@@ -286,8 +286,8 @@ export function LandingPage() {
           {/* Footer */}
           <footer className="mt-20 py-8 border-t border-white/10">
             <div className="flex justify-center">
-              <p className="text-zinc-400 text-[15px] md:text-[16px]">
-                Captured and created by sunset enthusiast,{' '}
+              <p className="text-zinc-400 text-[15px] md:text-[16px] text-center">
+                Captured and created by sunset enthusiast,<br className="md:hidden" />{' '}
                 <a
                   href="https://x.com/charmiekapoor"
                   target="_blank"
