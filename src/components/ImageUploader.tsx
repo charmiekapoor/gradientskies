@@ -71,7 +71,7 @@ export function ImageUploader({ onColorsExtracted }: ImageUploaderProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       className={`
-        cursor-pointer transition-all duration-300 border-2 border-dashed h-full min-h-[500px]
+        cursor-pointer transition-all duration-300 border-2 border-dashed h-full min-h-[300px] md:min-h-[500px]
         flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm rounded-[6px]
         ${isDragging 
           ? 'border-zinc-400 bg-zinc-500/10' 

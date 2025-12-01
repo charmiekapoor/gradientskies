@@ -136,11 +136,27 @@ export function LandingPage() {
         }
       `}</style>
 
-      <div className="relative py-16">
+      {/* Sticky Header for Mobile */}
+      <header className="sticky top-0 z-50 bg-[hsl(222,47%,5%)]/80 backdrop-blur-md border-b border-white/5 md:hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <img src="/gradient-wheel.png" alt="Logo" className="w-8 h-8" />
+          <a
+            href="/?view=extractor"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 hover:border-white/20 backdrop-blur-sm transition-colors"
+          >
+            <CloudSun className="w-3.5 h-3.5" />
+            <span>Create your own gradient</span>
+          </a>
+        </div>
+      </header>
+
+      <div className="relative py-8 md:py-16">
         {/* Photo Album Section */}
         <div className="max-w-7xl mx-auto px-4">
-          {/* Header with Title and CTA */}
-          <header className="flex items-start justify-between mb-16">
+          {/* Header with Title and CTA - Desktop */}
+          <header className="hidden md:flex items-start justify-between mb-16">
             <div>
               <h1 
                 className="text-5xl md:text-7xl font-bold mb-3 tracking-tight drop-shadow-2xl bg-clip-text text-transparent pb-1"
@@ -164,6 +180,21 @@ export function LandingPage() {
               <span>Create your own gradient</span>
             </a>
           </header>
+          
+          {/* Mobile Title */}
+          <div className="md:hidden mb-8">
+            <h1 
+              className="text-4xl font-bold mb-2 tracking-tight drop-shadow-2xl bg-clip-text text-transparent pb-1"
+              style={{
+                backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(186,230,253,0.9) 40%, rgba(251,207,232,0.9) 70%, rgba(255,255,255,0.95) 100%)',
+              }}
+            >
+              Colors in the Sky
+            </h1>
+            <p className="text-base text-zinc-400">
+              A reminder that the sky changes every minute. Pause, look up and enjoy its colors.
+            </p>
+          </div>
 
           <PhotoAlbum albums={albums} />
 

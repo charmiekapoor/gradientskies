@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { Copy, Check, Shuffle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { boostColor, rgbToHex, type RGB } from '@/utils/colorUtils';
+import { boostColor, rgbToHex, saturateColor, type RGB } from '@/utils/colorUtils';
 
 interface GradientPreviewProps {
   colors: RGB[] | null;
@@ -135,10 +135,10 @@ export function GradientPreview({
     </div>
   );
 
-  // Boost colors for vibrancy
+  // Boost colors for vibrancy - increased saturation and brightness
   const boostedColors = useMemo(() => {
     if (!colors) return null;
-    return colors.map(c => boostColor(c, 15, 15, 10));
+    return colors.map(c => boostColor(c, 30, 25, 20));
   }, [colors]);
 
   // Randomized blob positions - big variation when randomSeed changes
@@ -162,14 +162,6 @@ export function GradientPreview({
     return [0, 1, 2, 3, 4, 5].map((i) => 40 + seededRandom(randomSeed + i * 200) * 50); // 40-90%
   }, [randomSeed]);
   
-  // Randomized base gradient positions - change on randomSeed
-  const baseGradientPositions = useMemo(() => {
-    return [
-      { x: 10 + seededRandom(randomSeed + 300) * 30, y: 10 + seededRandom(randomSeed + 301) * 40 },
-      { x: 60 + seededRandom(randomSeed + 302) * 30, y: 50 + seededRandom(randomSeed + 303) * 40 },
-      { x: 30 + seededRandom(randomSeed + 304) * 40, y: 70 + seededRandom(randomSeed + 305) * 25 },
-    ];
-  }, [randomSeed]);
   
   // Randomized color weights/opacity for each blob
   const colorWeights = useMemo(() => {
@@ -179,28 +171,45 @@ export function GradientPreview({
   const renderMeshGradient = () => {
     if (!boostedColors || boostedColors.length < 3) return null;
     
-    // Top 3 colors for base gradient
-    const baseColors = boostedColors.slice(0, 3);
+    // Top 3 colors with 15% added saturation for base gradient
+    const baseColors = boostedColors.slice(0, 3).map(c => saturateColor(c, 1.15));
     // All colors for animated blobs
     const blobColors = boostedColors;
     
+    // Randomized gradient angle based on seed
+    const gradientAngle = Math.floor(seededRandom(randomSeed + 1000) * 360);
+    
     return (
       <div className="relative w-full h-full overflow-hidden">
-        {/* Base gradient with top 3 colors - positions randomized */}
+        {/* Base gradient with randomized angle */}
         <div 
           className="absolute inset-0"
           style={{ 
-            background: `
-              radial-gradient(ellipse 80% 60% at ${baseGradientPositions[0].x}% ${baseGradientPositions[0].y}%, rgb(${baseColors[0].join(',')}) 0%, transparent 60%),
-              radial-gradient(ellipse 70% 80% at ${baseGradientPositions[1].x}% ${baseGradientPositions[1].y}%, rgb(${baseColors[1].join(',')}) 0%, transparent 55%),
-              radial-gradient(ellipse 90% 70% at ${baseGradientPositions[2].x}% ${baseGradientPositions[2].y}%, rgb(${baseColors[2].join(',')}) 0%, transparent 50%),
-              linear-gradient(135deg, rgb(${baseColors[0].join(',')}) 0%, rgb(${baseColors[1].join(',')}) 50%, rgb(${baseColors[2].join(',')}) 100%)
-            `,
-            filter: `blur(${blur * 0.3}px)`,
+            background: `linear-gradient(${gradientAngle}deg, rgb(${baseColors[0].join(',')}) 0%, rgb(${baseColors[1].join(',')}) 50%, rgb(${baseColors[2].join(',')}) 100%)`,
           }}
         />
         
-        {/* Animated blobs with all colors */}
+        {/* Large blurred base blobs for organic feel */}
+        {baseColors.map((color, index) => {
+          const baseX = seededRandom(randomSeed + index * 50) * 100;
+          const baseY = seededRandom(randomSeed + index * 50 + 25) * 100;
+          return (
+            <div
+              key={`base-blob-${index}`}
+              className="absolute rounded-full"
+              style={{
+                background: `radial-gradient(circle, rgba(${color.join(',')}, 0.8) 0%, rgba(${color.join(',')}, 0.4) 40%, transparent 70%)`,
+                filter: `blur(${blur + 40}px)`,
+                width: '80%',
+                height: '80%',
+                top: `${baseY - 40}%`,
+                left: `${baseX - 40}%`,
+              }}
+            />
+          );
+        })}
+        
+        {/* Animated blobs with all colors - more prominent */}
         {blobColors.map((color, index) => {
           const pos = randomizedPositions[index] || randomizedPositions[0];
           const size = blobSizes[index] || 60;
@@ -210,15 +219,36 @@ export function GradientPreview({
               key={`${index}-${randomSeed}`}
               className="absolute rounded-full"
               style={{
-                background: `radial-gradient(circle, rgba(${color.join(',')}, ${weight}) 0%, rgba(${color.join(',')}, ${weight * 0.5}) 40%, transparent 70%)`,
-                filter: `blur(${blur * 0.8 + 20 + index * 5}px)`,
-                width: `${size}%`,
-                height: `${size}%`,
+                background: `radial-gradient(circle, rgba(${color.join(',')}, ${weight * 0.9}) 0%, rgba(${color.join(',')}, ${weight * 0.5}) 40%, transparent 70%)`,
+                filter: `blur(${blur * 0.6 + 15 + index * 3}px)`,
+                width: `${size + 20}%`,
+                height: `${size + 20}%`,
                 top: pos.top,
                 left: pos.left,
                 animation: `float${index % 6} ${pos.duration} ease-in-out infinite`,
                 animationDelay: pos.delay,
                 opacity: weight,
+              }}
+            />
+          );
+        })}
+        
+        {/* Extra vibrancy blobs - duplicates of first 3 colors */}
+        {baseColors.map((color, index) => {
+          const extraX = seededRandom(randomSeed + index * 999) * 80 + 10;
+          const extraY = seededRandom(randomSeed + index * 999 + 50) * 80 + 10;
+          const extraSize = 40 + seededRandom(randomSeed + index * 888) * 30;
+          return (
+            <div
+              key={`extra-${index}`}
+              className="absolute rounded-full"
+              style={{
+                background: `radial-gradient(circle, rgba(${color.join(',')}, 0.7) 0%, rgba(${color.join(',')}, 0) 60%)`,
+                filter: `blur(${blur * 0.5 + 20}px)`,
+                width: `${extraSize}%`,
+                height: `${extraSize}%`,
+                top: `${extraY}%`,
+                left: `${extraX}%`,
               }}
             />
           );
@@ -229,27 +259,25 @@ export function GradientPreview({
           className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(circle at 30% 20%, rgba(${baseColors[0].join(',')}, 0.4) 0%, transparent 40%),
-              radial-gradient(circle at 70% 80%, rgba(${baseColors[1].join(',')}, 0.3) 0%, transparent 45%),
-              radial-gradient(circle at 90% 30%, rgba(${baseColors[2].join(',')}, 0.35) 0%, transparent 35%)
+              radial-gradient(ellipse 60% 80% at ${30 + seededRandom(randomSeed + 600) * 20}% ${20 + seededRandom(randomSeed + 601) * 30}%, rgba(${baseColors[0].join(',')}, 0.5) 0%, transparent 50%),
+              radial-gradient(ellipse 70% 60% at ${60 + seededRandom(randomSeed + 602) * 30}% ${70 + seededRandom(randomSeed + 603) * 20}%, rgba(${baseColors[1].join(',')}, 0.4) 0%, transparent 45%),
+              radial-gradient(ellipse 50% 70% at ${80 + seededRandom(randomSeed + 604) * 15}% ${30 + seededRandom(randomSeed + 605) * 40}%, rgba(${baseColors[2].join(',')}, 0.45) 0%, transparent 40%)
             `,
-            filter: `blur(${blur * 0.5 + 10}px)`,
+            filter: `blur(${blur * 0.4 + 15}px)`,
             mixBlendMode: 'soft-light',
           }}
         />
         
-        {/* Noise/Grain overlay */}
-        {noise > 0 && (
-          <div 
-            className="absolute inset-0 mix-blend-overlay pointer-events-none"
-            style={{
-              opacity: noise / 100 * 0.3,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'repeat',
-              backgroundSize: '128px 128px',
-            }}
-          />
-        )}
+        {/* Noise/Grain overlay - always visible with minimum */}
+        <div 
+          className="absolute inset-0 mix-blend-overlay pointer-events-none"
+          style={{
+            opacity: Math.max(0.08, noise / 100 * 0.35),
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'repeat',
+            backgroundSize: '128px 128px',
+          }}
+        />
         
         <style>{`
           @keyframes float0 {
@@ -293,7 +321,7 @@ export function GradientPreview({
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="flex-1 min-h-[420px] perspective-1000 relative"
+        className="flex-1 min-h-[300px] md:min-h-[420px] perspective-1000 relative"
         style={{ perspective: '1000px' }}
       >
         {/* Slow moving blue gradient shadow */}
@@ -367,23 +395,26 @@ export function GradientPreview({
                 <label className="text-xs text-zinc-400 mb-2 block">Tap on the colors you want to remove.</label>
                 <div className="flex gap-2 items-center justify-between">
                   <div className="flex gap-2">
-                    {allColors?.slice(0, 6).map((color, index) => (
-                      <button
-                        key={index}
-                        onClick={() => onColorToggle(index)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
-                          activeColorIndices.includes(index) 
-                            ? 'border-white/50' 
-                            : 'border-transparent opacity-40'
-                        }`}
-                        style={{ background: `rgb(${color.join(',')})` }}
-                        aria-label={`${activeColorIndices.includes(index) ? 'Remove' : 'Add'} color ${index + 1}`}
-                      >
-                        {activeColorIndices.includes(index) && (
-                          <Check className="w-3 h-3 text-white drop-shadow-md" />
-                        )}
-                      </button>
-                    ))}
+                    {allColors?.slice(0, 6).map((color, index) => {
+                      const brightColor = boostColor(color, 30, 25, 20);
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => onColorToggle(index)}
+                          className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
+                            activeColorIndices.includes(index) 
+                              ? 'border-white/50' 
+                              : 'border-transparent opacity-40'
+                          }`}
+                          style={{ background: `rgb(${brightColor.join(',')})` }}
+                          aria-label={`${activeColorIndices.includes(index) ? 'Remove' : 'Add'} color ${index + 1}`}
+                        >
+                          {activeColorIndices.includes(index) && (
+                            <Check className="w-3 h-3 text-white drop-shadow-md" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                   <button
                     onClick={onRandomize}

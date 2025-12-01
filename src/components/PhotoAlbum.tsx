@@ -10,20 +10,40 @@ interface ColorWithWeight {
   weight: number;
 }
 
-const MONTH_COLORS: Record<string, { color: RGB; name: string }> = {
-  jan: { color: [255, 183, 77], name: 'Golden Ember' },
-  feb: { color: [255, 111, 97], name: 'Coral Blush' },
-  mar: { color: [186, 85, 211], name: 'Orchid Twilight' },
-  apr: { color: [255, 138, 101], name: 'Peach Horizon' },
-  may: { color: [64, 224, 208], name: 'Turquoise Dream' },
-  jun: { color: [255, 99, 71], name: 'Tomato Sunset' },
-  jul: { color: [147, 112, 219], name: 'Lavender Dusk' },
-  aug: { color: [255, 165, 0], name: 'Amber Blaze' },
-  sep: { color: [100, 149, 237], name: 'Cornflower Sky' },
-  oct: { color: [255, 127, 80], name: 'Burnt Sienna' },
-  nov: { color: [135, 206, 235], name: 'Sky Whisper' },
-  dec: { color: [220, 20, 60], name: 'Crimson Glow' },
-};
+// Generate a color name based on RGB values
+function getColorName(color: RGB): string {
+  const [r, g, b] = color;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const brightness = (r + g + b) / 3;
+  
+  // Determine dominant hue
+  if (max - min < 30) {
+    if (brightness > 200) return 'Soft Glow';
+    if (brightness > 150) return 'Gentle Mist';
+    return 'Twilight Shade';
+  }
+  
+  if (r >= g && r >= b) {
+    if (g > b + 50) return 'Golden Hour';
+    if (r > 200 && g > 100) return 'Sunset Blaze';
+    if (r > 200) return 'Crimson Sky';
+    return 'Warm Ember';
+  }
+  
+  if (g >= r && g >= b) {
+    if (b > r) return 'Teal Dream';
+    return 'Meadow Light';
+  }
+  
+  if (b >= r && b >= g) {
+    if (r > g + 30) return 'Lavender Dusk';
+    if (b > 180) return 'Azure Sky';
+    return 'Twilight Blue';
+  }
+  
+  return 'Sky Whisper';
+}
 
 type GradientMethod = 'sky-high-sat';
 
@@ -50,25 +70,9 @@ function hashString(str: string): number {
   return hash;
 }
 
-// Generate stable blob positions based on seed, with size proportional to weight
-function generateBlobPositions(seed: number, weights: number[]) {
-  return weights.map((weight, i) => {
-    const s = seed + i * 1000;
-    // Larger blobs for more vibrant effect, weight affects size significantly
-    const baseSize = 60 + seededRandom(s + 2) * 30;
-    const weightBonus = weight * 80;
-    const size = baseSize + weightBonus;
-    return {
-      top: `${-20 + seededRandom(s) * 80}%`,
-      left: `${-20 + seededRandom(s + 1) * 80}%`,
-      width: `${size}%`,
-      height: `${size}%`,
-    };
-  });
-}
-
 function GradientImage({ imageUrl, city, alt, onColorsExtracted, gradientMethod = 'sky-high-sat' }: GradientImageProps) {
   const [colorsWithWeights, setColorsWithWeights] = useState<ColorWithWeight[] | null>(null);
+  const [showImage, setShowImage] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const onColorsExtractedRef = useRef(onColorsExtracted);
   const { showSnackbar } = useSnackbar();
@@ -76,8 +80,6 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted, gradientMethod 
 
   // Stable random values based on imageUrl + method for unique gradients
   const seed = useMemo(() => hashString(imageUrl + gradientMethod), [imageUrl, gradientMethod]);
-  const weights = useMemo(() => colorsWithWeights?.map(c => c.weight) || [0.3, 0.25, 0.2, 0.15, 0.1, 0.1], [colorsWithWeights]);
-  const blobPositions = useMemo(() => generateBlobPositions(seed, weights), [seed, weights]);
 
   const colors = useMemo(() => colorsWithWeights?.map(c => c.color) || null, [colorsWithWeights]);
 
@@ -143,57 +145,14 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted, gradientMethod 
               return false;
             };
             
-            // Analyze colors
+            // Filter unwanted colors and keep in dominance order
             const analyzed = palette
               .filter(color => !isUnwanted(color))
-              .map(color => {
-                const [r, g, b] = color;
-                const max = Math.max(r, g, b);
-                const min = Math.min(r, g, b);
-                const sat = max > 0 ? (max - min) / max : 0;
-                const brightness = (r + g + b) / 3;
-                
-                // Detect color type - be more lenient for pale sky blues
-                const isBlue = (b > r * 0.95 && b > g * 0.9) || (b > 180 && b >= r && b >= g && brightness > 180);
-                const isWarm = r > b * 1.1 && (r > g * 0.9 || (r > 200 && g > 150));
-                const isPink = r > g && b > g * 0.8 && r > b * 0.8 && !isBlue;
-                
-                return { color, sat, brightness, isBlue, isWarm, isPink };
-              });
+              .map(color => ({ color }));
             
-            // Separate colors by type
-            const blues = analyzed.filter(c => c.isBlue);
-            const warms = analyzed.filter(c => c.isWarm || c.isPink);
-            const others = analyzed.filter(c => !c.isBlue && !c.isWarm && !c.isPink);
-            
-            // Sort each category by a score (saturation + brightness bonus)
-            const score = (c: typeof analyzed[0]) => c.sat * 0.6 + (c.brightness / 255) * 0.4;
-            blues.sort((a, b) => score(b) - score(a));
-            warms.sort((a, b) => score(b) - score(a));
-            others.sort((a, b) => score(b) - score(a));
-            
-            // Pick colors ensuring variety: prioritize having both warm and cool tones
-            const selected: typeof analyzed[0][] = [];
-            
-            // Take best warm colors (oranges, pinks, yellows)
-            if (warms.length > 0) selected.push(warms[0]);
-            if (warms.length > 1) selected.push(warms[1]);
-            
-            // Take best blue/cool colors
-            if (blues.length > 0) selected.push(blues[0]);
-            if (blues.length > 1 && selected.length < 4) selected.push(blues[1]);
-            
-            // Fill remaining with any other interesting colors
-            for (const c of [...warms.slice(2), ...others]) {
-              if (selected.length >= 5) break;
-              selected.push(c);
-            }
-            
-            // If we don't have enough, add remaining blues
-            for (const c of blues.slice(2)) {
-              if (selected.length >= 5) break;
-              selected.push(c);
-            }
+            // Pick colors based purely on dominance in original image
+            // ColorThief returns colors in order of dominance, so we preserve that order
+            const selected = analyzed.slice(0, 6);
             
             // Apply brightness boost
             const brightenColor = (c: RGB): RGB => {
@@ -250,73 +209,182 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted, gradientMethod 
     };
   }, [imageUrl, gradientMethod]);
 
-  // Use a brighter base - blend of first two colors or bright fallback
-  const baseColor = colors && colors.length >= 2 
-    ? [
-        Math.round((colors[0][0] + colors[1][0]) / 2),
-        Math.round((colors[0][1] + colors[1][1]) / 2),
-        Math.round((colors[0][2] + colors[1][2]) / 2),
-      ] as RGB
-    : colors?.[0] || [255, 180, 150];
+  // Top 3 colors for base gradient (equal weight)
+  const baseColors = useMemo(() => {
+    if (!colors || colors.length < 3) {
+      return colors?.slice(0, 3).map(c => saturateColor(c, 1.25)) || [[255, 180, 150] as RGB];
+    }
+    return colors.slice(0, 3).map(c => saturateColor(c, 1.25));
+  }, [colors]);
+  
+  // Next 3 colors for mesh blobs
+  const blobColors = useMemo(() => {
+    if (!colors || colors.length < 6) {
+      return colors?.slice(3, 6).map(c => saturateColor(c, 1.2)) || [];
+    }
+    return colors.slice(3, 6).map(c => saturateColor(c, 1.2));
+  }, [colors]);
 
   const transitionDelay = useMemo(() => Math.random() * 150, []);
   
+  const handleTap = () => {
+    setShowImage(prev => !prev);
+  };
+
   return (
-    <div className="relative aspect-video overflow-hidden rounded-[6px] shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
+    <div 
+      className="relative aspect-video overflow-hidden rounded-[6px] shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+      onClick={handleTap}
+    >
       {/* Mesh Gradient Background (default) */}
       <div 
-        className="absolute inset-0 transition-opacity duration-500 ease-in-out group-hover:opacity-0"
+        className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${showImage ? 'opacity-0' : 'opacity-100'} md:group-hover:opacity-0`}
         style={{ transitionDelay: `${transitionDelay}ms` }}
       >
-        {/* Base background */}
+        {/* BASE: 3 equal radial gradients from top 3 colors */}
         <div 
           className="absolute inset-0"
           style={{ 
-            background: `rgb(${baseColor.join(',')})`,
+            background: baseColors.length >= 3
+              ? `
+                radial-gradient(ellipse 80% 80% at 15% 20%, rgb(${baseColors[0].join(',')}) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 80% at 85% 25%, rgb(${baseColors[1].join(',')}) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 80% at 50% 85%, rgb(${baseColors[2].join(',')}) 0%, transparent 50%),
+                linear-gradient(180deg, rgb(${baseColors[0].join(',')}) 0%, rgb(${baseColors[1].join(',')}) 50%, rgb(${baseColors[2].join(',')}) 100%)
+              `
+              : `rgb(${baseColors[0]?.join(',') || '255,180,150'})`,
           }}
         />
         
-        {/* Mesh blobs with blur - larger and more overlapping for vibrant effect */}
-        {colors && colors.map((color, index) => {
-          const pos = blobPositions[index];
-          if (!pos) return null;
-          const weight = weights[index] || 0.2;
-          
-          return (
+        {/* MESH BLOBS: 6 animated blobs with random positions, sizes, angles, and blur */}
+        {blobColors.length > 0 && (
+          <>
+            {/* Blob 1 - random position, elliptical, sharp */}
             <div
-              key={index}
-              className="absolute rounded-full mix-blend-normal"
+              className="absolute"
               style={{
-                background: `radial-gradient(circle, rgba(${color.join(',')}, 0.95) 0%, rgba(${color.join(',')}, 0.6) 50%, rgba(${color.join(',')}, 0) 70%)`,
-                filter: `blur(${20 + index * 5}px)`,
-                width: pos.width,
-                height: pos.height,
-                top: pos.top,
-                left: pos.left,
-                opacity: 0.9 + weight * 0.1,
+                background: `radial-gradient(ellipse ${50 + seededRandom(seed + 10) * 30}% ${60 + seededRandom(seed + 11) * 40}%, rgba(${blobColors[0]?.join(',') || baseColors[0].join(',')}, 0.85) 0%, rgba(${blobColors[0]?.join(',') || baseColors[0].join(',')}, 0.3) 45%, transparent 70%)`,
+                filter: `blur(${12 + seededRandom(seed + 12) * 20}px)`,
+                width: `${45 + seededRandom(seed + 13) * 35}%`,
+                height: `${50 + seededRandom(seed + 14) * 30}%`,
+                top: `${-20 + seededRandom(seed) * 70}%`,
+                left: `${-15 + seededRandom(seed + 1) * 60}%`,
+                transform: `rotate(${seededRandom(seed + 15) * 360}deg)`,
+                borderRadius: `${30 + seededRandom(seed + 16) * 40}% ${50 + seededRandom(seed + 17) * 30}%`,
+                animation: 'meshFloat1 8s ease-in-out infinite',
               }}
             />
-          );
-        })}
+            {/* Blob 2 - random position, varying sharpness */}
+            <div
+              className="absolute"
+              style={{
+                background: `radial-gradient(ellipse ${60 + seededRandom(seed + 20) * 40}% ${50 + seededRandom(seed + 21) * 30}%, rgba(${blobColors[1]?.join(',') || baseColors[1].join(',')}, 0.8) 0%, rgba(${blobColors[1]?.join(',') || baseColors[1].join(',')}, 0.2) 50%, transparent 75%)`,
+                filter: `blur(${18 + seededRandom(seed + 22) * 25}px)`,
+                width: `${40 + seededRandom(seed + 23) * 40}%`,
+                height: `${45 + seededRandom(seed + 24) * 35}%`,
+                top: `${seededRandom(seed + 2) * 50}%`,
+                right: `${-10 + seededRandom(seed + 3) * 50}%`,
+                transform: `rotate(${seededRandom(seed + 25) * 360}deg)`,
+                borderRadius: `${40 + seededRandom(seed + 26) * 35}% ${25 + seededRandom(seed + 27) * 50}%`,
+                animation: 'meshFloat2 10s ease-in-out infinite',
+              }}
+            />
+            {/* Blob 3 - bottom area, organic shape */}
+            <div
+              className="absolute"
+              style={{
+                background: `radial-gradient(ellipse ${55 + seededRandom(seed + 30) * 35}% ${65 + seededRandom(seed + 31) * 25}%, rgba(${blobColors[2]?.join(',') || baseColors[2].join(',')}, 0.75) 0%, rgba(${blobColors[2]?.join(',') || baseColors[2].join(',')}, 0.15) 55%, transparent 80%)`,
+                filter: `blur(${15 + seededRandom(seed + 32) * 22}px)`,
+                width: `${50 + seededRandom(seed + 33) * 35}%`,
+                height: `${55 + seededRandom(seed + 34) * 30}%`,
+                bottom: `${-25 + seededRandom(seed + 4) * 60}%`,
+                left: `${seededRandom(seed + 5) * 60}%`,
+                transform: `rotate(${seededRandom(seed + 35) * 360}deg)`,
+                borderRadius: `${35 + seededRandom(seed + 36) * 45}% ${45 + seededRandom(seed + 37) * 35}%`,
+                animation: 'meshFloat3 9s ease-in-out infinite',
+              }}
+            />
+            {/* Blob 4 - center area, sharper edges */}
+            <div
+              className="absolute"
+              style={{
+                background: `radial-gradient(ellipse ${45 + seededRandom(seed + 40) * 30}% ${55 + seededRandom(seed + 41) * 25}%, rgba(${blobColors[0]?.join(',') || baseColors[0].join(',')}, 0.7) 0%, transparent 60%)`,
+                filter: `blur(${8 + seededRandom(seed + 42) * 18}px)`,
+                width: `${35 + seededRandom(seed + 43) * 30}%`,
+                height: `${40 + seededRandom(seed + 44) * 30}%`,
+                top: `${15 + seededRandom(seed + 6) * 50}%`,
+                left: `${10 + seededRandom(seed + 7) * 55}%`,
+                transform: `rotate(${seededRandom(seed + 45) * 360}deg)`,
+                borderRadius: `${50 + seededRandom(seed + 46) * 30}% ${30 + seededRandom(seed + 47) * 45}%`,
+                animation: 'meshFloat4 11s ease-in-out infinite',
+              }}
+            />
+            {/* Blob 5 - accent, small and sharp */}
+            <div
+              className="absolute"
+              style={{
+                background: `radial-gradient(ellipse ${50 + seededRandom(seed + 50) * 35}% ${45 + seededRandom(seed + 51) * 40}%, rgba(${blobColors[1]?.join(',') || baseColors[1].join(',')}, 0.8) 0%, transparent 55%)`,
+                filter: `blur(${6 + seededRandom(seed + 52) * 15}px)`,
+                width: `${30 + seededRandom(seed + 53) * 25}%`,
+                height: `${35 + seededRandom(seed + 54) * 25}%`,
+                top: `${seededRandom(seed + 8) * 70}%`,
+                right: `${seededRandom(seed + 9) * 60}%`,
+                transform: `rotate(${seededRandom(seed + 55) * 360}deg)`,
+                borderRadius: `${25 + seededRandom(seed + 56) * 50}% ${55 + seededRandom(seed + 57) * 30}%`,
+                animation: 'meshFloat5 12s ease-in-out infinite',
+              }}
+            />
+            {/* Blob 6 - extra accent, very soft */}
+            <div
+              className="absolute"
+              style={{
+                background: `radial-gradient(ellipse ${55 + seededRandom(seed + 60) * 30}% ${50 + seededRandom(seed + 61) * 35}%, rgba(${blobColors[2]?.join(',') || baseColors[2].join(',')}, 0.6) 0%, transparent 65%)`,
+                filter: `blur(${25 + seededRandom(seed + 62) * 20}px)`,
+                width: `${40 + seededRandom(seed + 63) * 30}%`,
+                height: `${45 + seededRandom(seed + 64) * 25}%`,
+                bottom: `${seededRandom(seed + 65) * 50}%`,
+                right: `${-5 + seededRandom(seed + 66) * 55}%`,
+                transform: `rotate(${seededRandom(seed + 67) * 360}deg)`,
+                borderRadius: `${45 + seededRandom(seed + 68) * 35}% ${35 + seededRandom(seed + 69) * 40}%`,
+                animation: 'meshFloat6 14s ease-in-out infinite',
+              }}
+            />
+          </>
+        )}
         
-        {/* Extra vibrancy layer - duplicate first 3 colors with different positions */}
-        {colors && colors.slice(0, 3).map((color, index) => {
-          const s = seed + index * 500 + 999;
-          return (
-            <div
-              key={`extra-${index}`}
-              className="absolute rounded-full"
-              style={{
-                background: `radial-gradient(circle, rgba(${color.join(',')}, 0.7) 0%, rgba(${color.join(',')}, 0) 60%)`,
-                filter: `blur(${30 + index * 10}px)`,
-                width: `${50 + seededRandom(s) * 40}%`,
-                height: `${50 + seededRandom(s + 1) * 40}%`,
-                top: `${seededRandom(s + 2) * 60}%`,
-                left: `${seededRandom(s + 3) * 60}%`,
-              }}
-            />
-          );
-        })}
+        {/* Flowing animation styles */}
+        <style>{`
+          @keyframes meshFloat1 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(${seededRandom(seed + 15) * 360}deg); }
+            25% { transform: translate(20px, 15px) scale(1.08) rotate(${seededRandom(seed + 15) * 360 + 5}deg); }
+            50% { transform: translate(-10px, 25px) scale(0.95) rotate(${seededRandom(seed + 15) * 360 - 3}deg); }
+            75% { transform: translate(-15px, -10px) scale(1.03) rotate(${seededRandom(seed + 15) * 360 + 2}deg); }
+          }
+          @keyframes meshFloat2 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(${seededRandom(seed + 25) * 360}deg); }
+            33% { transform: translate(-25px, 20px) scale(1.1) rotate(${seededRandom(seed + 25) * 360 + 8}deg); }
+            66% { transform: translate(15px, -15px) scale(0.92) rotate(${seededRandom(seed + 25) * 360 - 5}deg); }
+          }
+          @keyframes meshFloat3 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(${seededRandom(seed + 35) * 360}deg); }
+            50% { transform: translate(-20px, -25px) scale(1.12) rotate(${seededRandom(seed + 35) * 360 + 10}deg); }
+          }
+          @keyframes meshFloat4 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(${seededRandom(seed + 45) * 360}deg); }
+            33% { transform: translate(30px, -20px) scale(1.08) rotate(${seededRandom(seed + 45) * 360 + 6}deg); }
+            66% { transform: translate(-15px, 25px) scale(0.9) rotate(${seededRandom(seed + 45) * 360 - 8}deg); }
+          }
+          @keyframes meshFloat5 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(${seededRandom(seed + 55) * 360}deg); }
+            25% { transform: translate(-25px, 15px) scale(1.15) rotate(${seededRandom(seed + 55) * 360 + 12}deg); }
+            75% { transform: translate(20px, -20px) scale(0.88) rotate(${seededRandom(seed + 55) * 360 - 6}deg); }
+          }
+          @keyframes meshFloat6 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(${seededRandom(seed + 67) * 360}deg); }
+            40% { transform: translate(15px, 30px) scale(1.05) rotate(${seededRandom(seed + 67) * 360 + 4}deg); }
+            80% { transform: translate(-20px, -15px) scale(0.95) rotate(${seededRandom(seed + 67) * 360 - 7}deg); }
+          }
+        `}</style>
         
         {/* Noise/Grain overlay */}
         <div 
@@ -365,17 +433,90 @@ interface PhotoAlbumProps {
   albums: MonthAlbum[];
 }
 
-function MonthSection({ album }: { album: MonthAlbum }) {
+// Brighten a color by increasing lightness
+function brightenColor(rgb: RGB, amount: number): RGB {
+  const [r, g, b] = rgb;
+  const factor = 1 + amount;
+  return [
+    Math.min(255, Math.round(r * factor)),
+    Math.min(255, Math.round(g * factor)),
+    Math.min(255, Math.round(b * factor)),
+  ];
+}
+
+// Calculate color distance for uniqueness check
+function colorDistance(c1: RGB, c2: RGB): number {
+  return Math.sqrt(
+    Math.pow(c1[0] - c2[0], 2) +
+    Math.pow(c1[1] - c2[1], 2) +
+    Math.pow(c1[2] - c2[2], 2)
+  );
+}
+
+// Shift hue to make color more unique
+function shiftHue(rgb: RGB, degrees: number): RGB {
+  const [r, g, b] = rgb;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2 / 255;
+  
+  let h = 0;
+  let s = 0;
+  
+  if (max !== min) {
+    const d = (max - min) / 255;
+    s = l > 0.5 ? d / (2 - max/255 - min/255) : d / (max/255 + min/255);
+    
+    if (max === r) h = ((g - b) / (max - min) + (g < b ? 6 : 0)) / 6;
+    else if (max === g) h = ((b - r) / (max - min) + 2) / 6;
+    else h = ((r - g) / (max - min) + 4) / 6;
+  }
+  
+  h = (h + degrees / 360) % 1;
+  if (h < 0) h += 1;
+  
+  // HSL to RGB
+  if (s === 0) {
+    const val = Math.round(l * 255);
+    return [val, val, val];
+  }
+  
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  
+  const hueToRgb = (t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  
+  return [
+    Math.round(hueToRgb(h + 1/3) * 255),
+    Math.round(hueToRgb(h) * 255),
+    Math.round(hueToRgb(h - 1/3) * 255),
+  ];
+}
+
+interface MonthSectionProps {
+  album: MonthAlbum;
+  monthColor: RGB | null;
+}
+
+function MonthSection({ album, monthColor }: MonthSectionProps) {
   const { showSnackbar } = useSnackbar();
   
-  const monthColorData = MONTH_COLORS[album.monthKey];
+  const monthColorData = monthColor ? { color: monthColor, name: getColorName(monthColor) } : null;
   
   const uniqueCities = [...new Set(album.images.map(img => img.city))].sort().join(', ');
 
   return (
     <div className="space-y-4">
       {/* Month Header with Colors */}
-      <div className="flex items-center justify-between">
+      {/* Desktop Layout */}
+      <div className="hidden md:flex items-center justify-between">
         <div>
           <h2 className="text-[28px] font-semibold text-white drop-shadow-lg">
             {album.month}
@@ -388,6 +529,37 @@ function MonthSection({ album }: { album: MonthAlbum }) {
             <div className="relative group">
               <div
                 className="w-6 h-6 rounded-[6px] shadow-sm cursor-pointer hover:scale-125 transition-transform"
+                style={{ 
+                  backgroundColor: `rgb(${monthColorData.color.join(',')})`,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+                onClick={() => {
+                  navigator.clipboard.writeText(rgbToHex(monthColorData.color));
+                  showSnackbar('Copied!');
+                }}
+                title={`${monthColorData.name} - ${rgbToHex(monthColorData.color)}`}
+              />
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/90 text-white text-xs rounded-[6px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                <div className="font-medium">{monthColorData.name}</div>
+                <div className="text-zinc-400">{rgbToHex(monthColorData.color)}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Mobile Layout */}
+      <div className="md:hidden">
+        <h2 className="text-[24px] font-semibold text-white drop-shadow-lg">
+          {album.month}
+        </h2>
+        <p className="text-[15px] text-zinc-400">{uniqueCities}</p>
+        {monthColorData && (
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[12px] text-zinc-500">Color of the month</span>
+            <div className="relative group">
+              <div
+                className="w-4 h-4 rounded-[4px] shadow-sm cursor-pointer hover:scale-125 transition-transform"
                 style={{ 
                   backgroundColor: `rgb(${monthColorData.color.join(',')})`,
                   border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -436,6 +608,67 @@ function useSnackbar() {
 
 export function PhotoAlbum({ albums }: PhotoAlbumProps) {
   const [snackbar, setSnackbar] = useState<string | null>(null);
+  const [monthColors, setMonthColors] = useState<Record<string, RGB>>({});
+
+  // Extract unique colors for all months
+  useEffect(() => {
+    const extractedColors: Record<string, RGB> = {};
+    const usedColors: RGB[] = [];
+    let processed = 0;
+    
+    albums.forEach((album) => {
+      if (album.images.length === 0) {
+        processed++;
+        return;
+      }
+      
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = album.images[0].url;
+      
+      img.onload = () => {
+        try {
+          const colorThief = new ColorThief();
+          let dominantColor = colorThief.getColor(img) as RGB;
+          
+          // Boost saturation and brightness (30% brighter)
+          dominantColor = saturateColor(dominantColor, 1.3);
+          dominantColor = brightenColor(dominantColor, 0.3);
+          
+          // Ensure uniqueness - if too similar to existing color, shift hue
+          let attempts = 0;
+          const MIN_DISTANCE = 50; // Minimum color distance for uniqueness
+          
+          while (attempts < 8) {
+            const isTooSimilar = usedColors.some(c => colorDistance(dominantColor, c) < MIN_DISTANCE);
+            if (!isTooSimilar) break;
+            
+            // Shift hue by 30 degrees each attempt
+            dominantColor = shiftHue(dominantColor, 30 * (attempts + 1));
+            attempts++;
+          }
+          
+          usedColors.push(dominantColor);
+          extractedColors[album.monthKey] = dominantColor;
+        } catch {
+          extractedColors[album.monthKey] = brightenColor([255, 150, 100], 0.3);
+        }
+        
+        processed++;
+        if (processed === albums.length) {
+          setMonthColors(extractedColors);
+        }
+      };
+      
+      img.onerror = () => {
+        extractedColors[album.monthKey] = brightenColor([255, 150, 100], 0.3);
+        processed++;
+        if (processed === albums.length) {
+          setMonthColors(extractedColors);
+        }
+      };
+    });
+  }, [albums]);
 
   const showSnackbar = (message: string) => {
     setSnackbar(message);
@@ -446,7 +679,11 @@ export function PhotoAlbum({ albums }: PhotoAlbumProps) {
     <SnackbarContext.Provider value={{ showSnackbar }}>
       <div className="space-y-16">
         {albums.map((album) => (
-          <MonthSection key={`${album.month}-${album.year}`} album={album} />
+          <MonthSection 
+            key={`${album.month}-${album.year}`} 
+            album={album} 
+            monthColor={monthColors[album.monthKey] || null}
+          />
         ))}
       </div>
       {snackbar && (
