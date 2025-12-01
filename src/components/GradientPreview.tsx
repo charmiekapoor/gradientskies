@@ -1,12 +1,11 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { Copy, Check, Shuffle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { boostColor, rgbToHex, type RGB, type GradientType } from '@/utils/colorUtils';
+import { boostColor, rgbToHex, type RGB } from '@/utils/colorUtils';
 
 interface GradientPreviewProps {
   colors: RGB[] | null;
   allColors: RGB[] | null;
-  gradientType: GradientType;
   blur: number;
   noise: number;
   hasImage: boolean;
@@ -36,7 +35,6 @@ function seededRandom(seed: number): number {
 export function GradientPreview({ 
   colors, 
   allColors,
-  gradientType, 
   blur, 
   noise,
   hasImage,
@@ -329,7 +327,7 @@ export function GradientPreview({
         >
           {!hasImage ? (
             renderPlaceholder()
-          ) : gradientType === 'mesh' ? (
+          ) : (
             <>
               {renderMeshGradient()}
               {/* Copy hex button on hover */}
@@ -355,25 +353,6 @@ export function GradientPreview({
                 </button>
               </div>
             </>
-          ) : (
-            <div className="relative w-full h-full">
-              <div 
-                className="w-full h-full"
-                style={{ 
-                  background: gradient,
-                  filter: blur > 0 ? `blur(${blur}px)` : undefined,
-                }}
-              />
-              {/* Noise overlay for non-mesh gradients too */}
-              <div 
-                className="absolute inset-0 opacity-[0.12] mix-blend-overlay pointer-events-none"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'repeat',
-                  backgroundSize: '128px 128px',
-                }}
-              />
-            </div>
           )}
         </div>
       </div>

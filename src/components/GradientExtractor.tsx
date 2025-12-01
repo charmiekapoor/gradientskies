@@ -5,7 +5,6 @@ import { GradientPreview } from '@/components/GradientPreview';
 import {
   applyHarmonyMode,
   type RGB,
-  type GradientType,
 } from '@/utils/colorUtils';
 
 function getWeatherIcon(code: number) {
@@ -29,7 +28,6 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
   const [colors, setColors] = useState<RGB[] | null>(null);
   const [allColors, setAllColors] = useState<RGB[] | null>(null);
   const [activeColorIndices, setActiveColorIndices] = useState<number[]>([0, 1, 2, 3, 4]);
-  const [gradientType, setGradientType] = useState<GradientType>('mesh');
   const [blur, setBlur] = useState<number>(20);
   const [noise, setNoise] = useState<number>(50);
   const [weather, setWeather] = useState<{ temperature: number; weatherCode: number } | null>(null);
@@ -53,7 +51,6 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
     setColors(processedColors);
     setAllColors(extractedAllColors.slice(0, 6));
     setActiveColorIndices([0, 1, 2, 3, 4, 5].filter(i => i < extractedAllColors.length));
-    setGradientType('mesh');
     setBlur(20);
     setNoise(50);
   }, []);
@@ -122,7 +119,6 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
           <GradientPreview 
             colors={activeColors}
             allColors={allColors}
-            gradientType={gradientType}
             blur={blur}
             noise={noise}
             hasImage={colors !== null}
