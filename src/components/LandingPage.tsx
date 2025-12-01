@@ -204,7 +204,7 @@ export function LandingPage() {
                   backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(186,230,253,0.9) 40%, rgba(251,207,232,0.9) 70%, rgba(255,255,255,0.95) 100%)',
                 }}
               >
-                Colors in the Sky
+                Colors of the Sky
               </h1>
               <p className="text-lg md:text-xl text-zinc-400">
                 A reminder that the sky changes every minute. Pause, look up and enjoy its colors.
@@ -229,7 +229,7 @@ export function LandingPage() {
                 backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(186,230,253,0.9) 40%, rgba(251,207,232,0.9) 70%, rgba(255,255,255,0.95) 100%)',
               }}
             >
-              Colors in the Sky
+              Colors of the Sky
             </h1>
             <p className="text-base text-zinc-400">
               A reminder that the sky changes every minute. Pause, look up and enjoy its colors.
@@ -240,7 +240,7 @@ export function LandingPage() {
 
           {/* Footer */}
           <footer className="mt-20 py-8 border-t border-white/10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
               <p className="text-zinc-400 text-[14px]">
                 Captured and created by sunset enthusiast,{' '}
                 <a

@@ -211,8 +211,8 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
           <span>Back to Gallery</span>
         </button>
 
-        <header className="text-center mb-8">
-          <h1 className="text-[36px] font-medium tracking-tight text-white">
+        <header className="text-left md:text-center mb-8">
+          <h1 className="text-[28px] md:text-[36px] font-medium tracking-tight text-white leading-[110%]">
             Generate beautiful gradients of your sky pictures.
           </h1>
         </header>
@@ -239,7 +239,7 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
         
         {/* Footer */}
         <footer className="mt-20 py-8 border-t border-white/10">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
             <p className="text-zinc-400 text-[14px]">
               Captured and created by sunset enthusiast,{' '}
               <a

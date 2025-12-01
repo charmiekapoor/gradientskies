@@ -321,7 +321,7 @@ export function GradientPreview({
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="flex-1 min-h-[300px] md:min-h-[420px] perspective-1000 relative"
+        className="flex-1 min-h-[250px] md:min-h-[420px] perspective-1000 relative border-2 border-zinc-700 rounded-[6px]"
         style={{ perspective: '1000px' }}
       >
         {/* Slow moving blue gradient shadow */}
