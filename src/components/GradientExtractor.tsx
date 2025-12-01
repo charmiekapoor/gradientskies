@@ -240,7 +240,7 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
         {/* Footer */}
         <footer className="mt-20 py-8 border-t border-white/10">
           <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
-            <p className="text-zinc-400 text-[13px] md:text-[14px]">
+            <p className="text-zinc-400 text-[15px] md:text-[16px]">
               Captured and created by sunset enthusiast,{' '}
               <a
                 href="https://x.com/charmiekapoor"
@@ -252,7 +252,7 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
               </a>
             </p>
             {weather && (
-              <div className="flex items-center gap-2 text-zinc-400 text-[13px] md:text-[14px] whitespace-nowrap">
+              <div className="flex items-center gap-2 text-zinc-400 text-[15px] md:text-[16px] whitespace-nowrap">
                 <span>Bangalore</span>
                 <span>•</span>
                 <Cloud className="w-5 h-5 text-zinc-400" />

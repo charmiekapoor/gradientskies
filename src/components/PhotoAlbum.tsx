@@ -523,14 +523,14 @@ function MonthSection({ album, monthColor }: MonthSectionProps) {
       {/* Desktop Layout */}
       <div className="hidden md:flex items-center justify-between">
         <div>
-          <h2 className="text-[28px] font-semibold text-white drop-shadow-lg">
+          <h2 className="text-[28px] font-medium text-white drop-shadow-lg">
             {album.month}
           </h2>
           <p className="text-[17px] text-zinc-400">{uniqueCities}</p>
         </div>
         {monthColorData && (
           <div className="flex items-center gap-3">
-            <span className="text-[20px] text-zinc-400">Color of the month</span>
+            <span className="text-[18px] text-zinc-400">Color of the month</span>
             <div className="relative group">
               <div
                 className="w-6 h-6 rounded-[6px] shadow-sm cursor-pointer hover:scale-125 transition-transform"
@@ -555,34 +555,9 @@ function MonthSection({ album, monthColor }: MonthSectionProps) {
       
       {/* Mobile Layout */}
       <div className="md:hidden">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[24px] font-semibold text-white drop-shadow-lg">
-            {album.month.slice(0, 3)}
-          </h2>
-          {monthColorData && (
-            <div className="flex items-center gap-2">
-              <span className="text-[14px] text-zinc-500">Color of the month</span>
-              <div className="relative group">
-                <div
-                  className="w-4 h-4 rounded-[4px] shadow-sm cursor-pointer hover:scale-125 transition-transform"
-                  style={{ 
-                    backgroundColor: `rgb(${monthColorData.color.join(',')})`,
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(rgbToHex(monthColorData.color));
-                    showSnackbar('Copied!');
-                  }}
-                  title={`${monthColorData.name} - ${rgbToHex(monthColorData.color)}`}
-                />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/90 text-white text-xs rounded-[6px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  <div className="font-medium">{monthColorData.name}</div>
-                  <div className="text-zinc-400">{rgbToHex(monthColorData.color)}</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <h2 className="text-[24px] font-medium text-white drop-shadow-lg">
+          {album.month.slice(0, 3)}
+        </h2>
         <p className="text-[15px] text-zinc-400">{uniqueCities}</p>
       </div>
       

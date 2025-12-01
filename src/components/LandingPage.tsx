@@ -199,9 +199,10 @@ export function LandingPage() {
           <header className="hidden md:flex items-start justify-between mb-16">
             <div>
               <h1 
-                className="text-5xl md:text-7xl font-bold mb-3 tracking-tight drop-shadow-2xl bg-clip-text text-transparent pb-1"
+                className="text-[48px] md:text-[48px] mb-3 drop-shadow-2xl bg-clip-text text-transparent pb-1 cursor-default title-gradient"
                 style={{
-                  backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(186,230,253,0.9) 40%, rgba(251,207,232,0.9) 70%, rgba(255,255,255,0.95) 100%)',
+                  fontFamily: '"Boldonse", sans-serif',
+                  letterSpacing: '1px',
                 }}
               >
                 Colors of the Sky
@@ -224,9 +225,10 @@ export function LandingPage() {
           {/* Mobile Title */}
           <div className="md:hidden mb-8">
             <h1 
-              className="text-4xl font-bold mb-2 tracking-tight drop-shadow-2xl bg-clip-text text-transparent pb-1"
+              className="text-[48px] mb-2 drop-shadow-2xl bg-clip-text text-transparent pb-1 cursor-default title-gradient"
               style={{
-                backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(186,230,253,0.9) 40%, rgba(251,207,232,0.9) 70%, rgba(255,255,255,0.95) 100%)',
+                fontFamily: '"Boldonse", sans-serif',
+                letterSpacing: '1px',
               }}
             >
               Colors of the Sky
@@ -236,12 +238,15 @@ export function LandingPage() {
             </p>
           </div>
 
+          {/* Divider */}
+          <div className="border-t border-white/10 mb-12" />
+
           <PhotoAlbum albums={albums} />
 
           {/* Footer */}
           <footer className="mt-20 py-8 border-t border-white/10">
             <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
-              <p className="text-zinc-400 text-[13px] md:text-[14px]">
+              <p className="text-zinc-400 text-[15px] md:text-[16px]">
                 Captured and created by sunset enthusiast,{' '}
                 <a
                   href="https://x.com/charmiekapoor"
@@ -253,7 +258,7 @@ export function LandingPage() {
                 </a>
               </p>
               {weather && (
-                <div className="flex items-center gap-2 text-zinc-400 text-[13px] md:text-[14px] whitespace-nowrap">
+                <div className="flex items-center gap-2 text-zinc-400 text-[15px] md:text-[16px] whitespace-nowrap">
                   <span>Bangalore</span>
                   <span>•</span>
                   {getWeatherIcon()}
