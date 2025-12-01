@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PhotoAlbum, generateAlbums } from './PhotoAlbum';
+import { PhotoAlbum, fetchAlbums } from './PhotoAlbum';
+import type { MonthAlbum } from './PhotoAlbum';
 import { CloudSun } from 'lucide-react';
 
 interface Sparkle {
@@ -11,7 +12,7 @@ interface Sparkle {
 }
 
 export function LandingPage() {
-  const albums = generateAlbums();
+  const [albums, setAlbums] = useState<MonthAlbum[]>([]);
   const [sparkles, setSparkles] = useState<Sparkle[]>([]);
   
 
@@ -46,6 +47,10 @@ export function LandingPage() {
       setSparkles(prev => prev.filter(s => Date.now() - s.id < 800));
     }, 100);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    fetchAlbums().then(setAlbums);
   }, []);
 
   return (
@@ -106,10 +111,10 @@ export function LandingPage() {
                   backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(186,230,253,0.9) 40%, rgba(251,207,232,0.9) 70%, rgba(255,255,255,0.95) 100%)',
                 }}
               >
-                Beautiful Sunsets
+                Colors in the Sky
               </h1>
               <p className="text-lg md:text-xl text-zinc-400">
-                A collection of gradient memories from around the world
+                A reminder that the sky changes every minute. Pause, look up and enjoy its colors.
               </p>
             </div>
             <a

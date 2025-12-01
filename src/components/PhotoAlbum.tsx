@@ -1,150 +1,80 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import ColorThief from 'colorthief';
 import { Copy } from 'lucide-react';
-import { sortByHue, rgbToHex, getColorName } from '@/utils/colorUtils';
+import { rgbToHex, getColorName, saturateColor, sortByHue } from '@/utils/colorUtils';
 import type { RGB } from '@/utils/colorUtils';
+
+interface ColorWithWeight {
+  color: RGB;
+  weight: number;
+}
 
 interface ImageData {
   url: string;
   city: string;
 }
 
-const JANUARY_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
-  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Maldives' },
-  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'California' },
-  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Mountains' },
-  { url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=800&h=600&fit=crop', city: 'Ocean' },
-  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Swiss Alps' },
-];
+interface ManifestImage {
+  file: string;
+  location: string;
+}
 
-const FEBRUARY_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Greece' },
-  { url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=800&h=600&fit=crop', city: 'Beach' },
-  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
-  { url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop', city: 'Malibu' },
-  { url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop', city: 'Maldives' },
-  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
-];
-
-const MARCH_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1489914099268-1dad649f76bf?w=800&h=600&fit=crop', city: 'Tokyo' },
-  { url: 'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop', city: 'Croatia' },
-  { url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&h=600&fit=crop', city: 'Countryside' },
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
-  { url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop', city: 'Austria' },
-  { url: 'https://images.unsplash.com/photo-1532978379173-523e16f371f2?w=800&h=600&fit=crop', city: 'Thailand' },
-];
-
-const APRIL_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=800&h=600&fit=crop', city: 'Paris' },
-  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
-  { url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=600&fit=crop', city: 'Lake' },
-  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'California' },
-  { url: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?w=800&h=600&fit=crop', city: 'Mountains' },
-  { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&h=600&fit=crop', city: 'Bali' },
-];
-
-const MAY_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=800&h=600&fit=crop', city: 'Beach' },
-  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Valley' },
-  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Ocean' },
-  { url: 'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=800&h=600&fit=crop', city: 'Morocco' },
-  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Alps' },
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Greece' },
-];
-
-const JUNE_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
-  { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&h=600&fit=crop', city: 'Bali' },
-  { url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop', city: 'Maldives' },
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
-  { url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=800&h=600&fit=crop', city: 'Coast' },
-  { url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop', city: 'Malibu' },
-];
-
-const JULY_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'San Francisco' },
-  { url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=800&h=600&fit=crop', city: 'Beach' },
-  { url: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=800&h=600&fit=crop', city: 'Paris' },
-  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
-  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Tropics' },
-  { url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&h=600&fit=crop', city: 'Fields' },
-];
-
-const AUGUST_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?w=800&h=600&fit=crop', city: 'Mountains' },
-  { url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=800&h=600&fit=crop', city: 'Coast' },
-  { url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=600&fit=crop', city: 'Lake' },
-  { url: 'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop', city: 'Croatia' },
-  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Valley' },
-  { url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop', city: 'Austria' },
-];
-
-const SEPTEMBER_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop', city: 'Malibu' },
-  { url: 'https://images.unsplash.com/photo-1532978379173-523e16f371f2?w=800&h=600&fit=crop', city: 'Thailand' },
-  { url: 'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=800&h=600&fit=crop', city: 'Morocco' },
-  { url: 'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=800&h=600&fit=crop', city: 'Ocean' },
-  { url: 'https://images.unsplash.com/photo-1489914099268-1dad649f76bf?w=800&h=600&fit=crop', city: 'Japan' },
-  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
-];
-
-const OCTOBER_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Santorini' },
-  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Swiss Alps' },
-  { url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop', city: 'Maldives' },
-  { url: 'https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=800&h=600&fit=crop', city: 'California' },
-  { url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&h=600&fit=crop', city: 'Countryside' },
-  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
-];
-
-const NOVEMBER_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop', city: 'Swiss Alps' },
-  { url: 'https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=800&h=600&fit=crop', city: 'Beach' },
-  { url: 'https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=800&h=600&fit=crop', city: 'Mountains' },
-  { url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=800&h=600&fit=crop', city: 'Tropics' },
-  { url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', city: 'Hawaii' },
-  { url: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=800&h=600&fit=crop', city: 'Bali' },
-];
-
-const DECEMBER_IMAGES: ImageData[] = [
-  { url: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?w=800&h=600&fit=crop', city: 'Mountains' },
-  { url: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=600&fit=crop', city: 'Desert' },
-  { url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop', city: 'Austria' },
-  { url: 'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=800&h=600&fit=crop', city: 'Coast' },
-  { url: 'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=800&h=600&fit=crop', city: 'Morocco' },
-  { url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&h=600&fit=crop', city: 'Greece' },
-];
+interface Manifest {
+  [key: string]: ManifestImage[];
+}
 
 export interface MonthAlbum {
   month: string;
+  monthKey: string;
   year: number;
   images: ImageData[];
 }
 
-export function generateAlbums(): MonthAlbum[] {
-  return [
-    { month: 'December', year: 2025, images: DECEMBER_IMAGES },
-    { month: 'November', year: 2025, images: NOVEMBER_IMAGES },
-    { month: 'October', year: 2025, images: OCTOBER_IMAGES },
-    { month: 'September', year: 2025, images: SEPTEMBER_IMAGES },
-    { month: 'August', year: 2025, images: AUGUST_IMAGES },
-    { month: 'July', year: 2025, images: JULY_IMAGES },
-    { month: 'June', year: 2025, images: JUNE_IMAGES },
-    { month: 'May', year: 2025, images: MAY_IMAGES },
-    { month: 'April', year: 2025, images: APRIL_IMAGES },
-    { month: 'March', year: 2025, images: MARCH_IMAGES },
-    { month: 'February', year: 2025, images: FEBRUARY_IMAGES },
-    { month: 'January', year: 2025, images: JANUARY_IMAGES },
-  ];
+const MONTH_ORDER = [
+  { name: 'December', key: 'dec' },
+  { name: 'November', key: 'nov' },
+  { name: 'October', key: 'oct' },
+  { name: 'September', key: 'sep' },
+  { name: 'August', key: 'aug' },
+  { name: 'July', key: 'jul' },
+  { name: 'June', key: 'jun' },
+  { name: 'May', key: 'may' },
+  { name: 'April', key: 'apr' },
+  { name: 'March', key: 'mar' },
+  { name: 'February', key: 'feb' },
+  { name: 'January', key: 'jan' },
+];
+
+export async function fetchAlbums(): Promise<MonthAlbum[]> {
+  try {
+    const response = await fetch('/sunsets/manifest.json');
+    const manifest: Manifest = await response.json();
+    
+    return MONTH_ORDER
+      .filter(m => manifest[m.key] && manifest[m.key].length > 0)
+      .map(m => ({
+        month: m.name,
+        monthKey: m.key,
+        year: 2025,
+        images: manifest[m.key].map(img => ({
+          url: `/sunsets/${img.file}`,
+          city: img.location,
+        })),
+      }));
+  } catch (error) {
+    console.error('Failed to load manifest:', error);
+    return [];
+  }
 }
+
+type GradientMethod = 'sky-high-sat';
 
 interface GradientImageProps {
   imageUrl: string;
   city: string;
   alt: string;
   onColorsExtracted?: (colors: RGB[]) => void;
+  gradientMethod?: GradientMethod;
 }
 
 // Simple seeded random for stable values
@@ -162,29 +92,35 @@ function hashString(str: string): number {
   return hash;
 }
 
-// Generate stable blob positions based on seed
-function generateBlobPositions(seed: number, count: number) {
-  return Array.from({ length: count }, (_, i) => {
+// Generate stable blob positions based on seed, with size proportional to weight
+function generateBlobPositions(seed: number, weights: number[]) {
+  return weights.map((weight, i) => {
     const s = seed + i * 1000;
+    // Larger blobs for more vibrant effect, weight affects size significantly
+    const baseSize = 60 + seededRandom(s + 2) * 30;
+    const weightBonus = weight * 80;
+    const size = baseSize + weightBonus;
     return {
-      top: `${seededRandom(s) * 80}%`,
-      left: `${seededRandom(s + 1) * 80}%`,
-      width: `${50 + seededRandom(s + 2) * 40}%`,
-      height: `${50 + seededRandom(s + 3) * 40}%`,
+      top: `${-20 + seededRandom(s) * 80}%`,
+      left: `${-20 + seededRandom(s + 1) * 80}%`,
+      width: `${size}%`,
+      height: `${size}%`,
     };
   });
 }
 
-function GradientImage({ imageUrl, city, alt, onColorsExtracted }: GradientImageProps) {
-  const [colors, setColors] = useState<RGB[] | null>(null);
+function GradientImage({ imageUrl, city, alt, onColorsExtracted, gradientMethod = 'sky-high-sat' }: GradientImageProps) {
+  const [colorsWithWeights, setColorsWithWeights] = useState<ColorWithWeight[] | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const onColorsExtractedRef = useRef(onColorsExtracted);
   onColorsExtractedRef.current = onColorsExtracted;
 
-  // Stable random values based on imageUrl
-  const seed = useMemo(() => hashString(imageUrl), [imageUrl]);
-  const blur = useMemo(() => 25 + Math.floor(seededRandom(seed) * 20), [seed]);
-  const blobPositions = useMemo(() => generateBlobPositions(seed, 4), [seed]);
+  // Stable random values based on imageUrl + method for unique gradients
+  const seed = useMemo(() => hashString(imageUrl + gradientMethod), [imageUrl, gradientMethod]);
+  const weights = useMemo(() => colorsWithWeights?.map(c => c.weight) || [0.3, 0.25, 0.2, 0.15, 0.1, 0.1], [colorsWithWeights]);
+  const blobPositions = useMemo(() => generateBlobPositions(seed, weights), [seed, weights]);
+
+  const colors = useMemo(() => colorsWithWeights?.map(c => c.color) || null, [colorsWithWeights]);
 
   useEffect(() => {
     const img = new Image();
@@ -193,42 +129,125 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted }: GradientImage
     
     img.onload = () => {
       try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('No canvas context');
+        
+        const w = 100;
+        const h = 100;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        // Extract from top 70% of image (sky focus)
         const colorThief = new ColorThief();
-        const palette = colorThief.getPalette(img, 6) as RGB[];
-        const sortedColors = sortByHue(palette);
-        setColors(sortedColors.slice(0, 4));
-        onColorsExtractedRef.current?.(sortedColors.slice(0, 3));
+        
+        // Create canvas with top 70% of image
+        const skyCanvas = document.createElement('canvas');
+        const skyCtx = skyCanvas.getContext('2d');
+        if (!skyCtx) throw new Error('No context');
+        
+        const skyHeight = Math.floor(h * 0.7);
+        skyCanvas.width = w;
+        skyCanvas.height = skyHeight;
+        skyCtx.drawImage(canvas, 0, 0, w, skyHeight, 0, 0, w, skyHeight);
+        
+        // Create image from sky portion
+        const skyImg = new Image();
+        skyImg.src = skyCanvas.toDataURL();
+        
+        skyImg.onload = () => {
+          try {
+            const palette = colorThief.getPalette(skyImg, 10) as RGB[];
+            
+            // Only filter out very green colors (foliage)
+            const isVeryGreen = (color: RGB): boolean => {
+              const [r, g, b] = color;
+              return g > r * 1.3 && g > b * 1.3;
+            };
+            
+            // Analyze colors for saturation and brightness
+            const analyzed = palette.map(color => ({
+              color,
+              sat: (Math.max(...color) - Math.min(...color)) / (Math.max(...color) || 1),
+              brightness: (color[0] + color[1] + color[2]) / 3
+            }))
+            .filter(c => c.brightness > 25 && !isVeryGreen(c.color));
+            
+            // Sort by saturation to get most vibrant colors first
+            const sortedBySat = [...analyzed].sort((a, b) => b.sat - a.sat);
+            
+            // Take top 5 most saturated colors
+            const top5 = sortedBySat.slice(0, 5);
+            
+            // Apply 30% saturation boost + 30% brightness increase
+            const brightenColor = (c: RGB): RGB => {
+              const factor = 1.3;
+              return [
+                Math.min(255, Math.round(c[0] * factor)),
+                Math.min(255, Math.round(c[1] * factor)),
+                Math.min(255, Math.round(c[2] * factor)),
+              ];
+            };
+            
+            const extractedColors: ColorWithWeight[] = top5.map(({ color }, i) => ({
+              color: saturateColor(brightenColor(color), 30),
+              weight: i < 3 ? (3 - i) * 0.25 : 0.1,
+            }));
+            
+            // Pad if needed
+            while (extractedColors.length < 4) {
+              extractedColors.push({ color: [255, 180, 120], weight: 0.1 });
+            }
+            
+            setColorsWithWeights(extractedColors);
+            onColorsExtractedRef.current?.(extractedColors.slice(0, 3).map(c => c.color));
+          } catch (err) {
+            console.error('Color extraction failed:', err);
+          }
+        };
+        
+        return; // State set in onload
       } catch (error) {
         console.error('Failed to extract colors:', error);
-        const fallback: RGB[] = [
-          [30, 58, 138],
-          [124, 58, 237],
-          [236, 72, 153],
-          [249, 115, 22],
+        const fallback: ColorWithWeight[] = [
+          { color: [255, 150, 100], weight: 0.3 },
+          { color: [255, 180, 120], weight: 0.25 },
+          { color: [255, 130, 80], weight: 0.2 },
+          { color: [200, 150, 200], weight: 0.15 },
+          { color: [150, 180, 255], weight: 0.1 },
         ];
-        setColors(fallback);
-        onColorsExtractedRef.current?.(fallback.slice(0, 3));
+        setColorsWithWeights(fallback);
+        onColorsExtractedRef.current?.(fallback.slice(0, 3).map(c => c.color));
       }
     };
     
     img.onerror = () => {
-      const fallback: RGB[] = [
-        [30, 58, 138],
-        [124, 58, 237],
-        [236, 72, 153],
-        [249, 115, 22],
+      const fallback: ColorWithWeight[] = [
+        { color: [255, 150, 100], weight: 0.3 },
+        { color: [255, 180, 120], weight: 0.25 },
+        { color: [255, 130, 80], weight: 0.2 },
+        { color: [200, 150, 200], weight: 0.15 },
+        { color: [150, 180, 255], weight: 0.1 },
       ];
-      setColors(fallback);
-      onColorsExtractedRef.current?.(fallback.slice(0, 3));
+      setColorsWithWeights(fallback);
+      onColorsExtractedRef.current?.(fallback.slice(0, 3).map(c => c.color));
     };
-  }, [imageUrl]);
+  }, [imageUrl, gradientMethod]);
 
-  const baseColor = colors?.[0] || [30, 58, 138];
+  // Use a brighter base - blend of first two colors or bright fallback
+  const baseColor = colors && colors.length >= 2 
+    ? [
+        Math.round((colors[0][0] + colors[1][0]) / 2),
+        Math.round((colors[0][1] + colors[1][1]) / 2),
+        Math.round((colors[0][2] + colors[1][2]) / 2),
+      ] as RGB
+    : colors?.[0] || [255, 180, 150];
 
   return (
     <div className="relative aspect-video overflow-hidden rounded-[6px] shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
       {/* Mesh Gradient Background (default) */}
-      <div className="absolute inset-0 transition-opacity duration-500 ease-in-out group-hover:opacity-0">
+      <div className="absolute inset-0 transition-opacity duration-150 ease-out group-hover:opacity-0">
         {/* Base background */}
         <div 
           className="absolute inset-0"
@@ -237,22 +256,43 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted }: GradientImage
           }}
         />
         
-        {/* Mesh blobs with blur */}
+        {/* Mesh blobs with blur - larger and more overlapping for vibrant effect */}
         {colors && colors.map((color, index) => {
           const pos = blobPositions[index];
           if (!pos) return null;
+          const weight = weights[index] || 0.2;
           
           return (
             <div
               key={index}
-              className="absolute rounded-full"
+              className="absolute rounded-full mix-blend-normal"
               style={{
-                background: `rgb(${color.join(',')})`,
-                filter: `blur(${blur + 15 + index * 8}px)`,
+                background: `radial-gradient(circle, rgba(${color.join(',')}, 0.95) 0%, rgba(${color.join(',')}, 0.6) 50%, rgba(${color.join(',')}, 0) 70%)`,
+                filter: `blur(${20 + index * 5}px)`,
                 width: pos.width,
                 height: pos.height,
                 top: pos.top,
                 left: pos.left,
+                opacity: 0.9 + weight * 0.1,
+              }}
+            />
+          );
+        })}
+        
+        {/* Extra vibrancy layer - duplicate first 3 colors with different positions */}
+        {colors && colors.slice(0, 3).map((color, index) => {
+          const s = seed + index * 500 + 999;
+          return (
+            <div
+              key={`extra-${index}`}
+              className="absolute rounded-full"
+              style={{
+                background: `radial-gradient(circle, rgba(${color.join(',')}, 0.7) 0%, rgba(${color.join(',')}, 0) 60%)`,
+                filter: `blur(${30 + index * 10}px)`,
+                width: `${50 + seededRandom(s) * 40}%`,
+                height: `${50 + seededRandom(s + 1) * 40}%`,
+                top: `${seededRandom(s + 2) * 60}%`,
+                left: `${seededRandom(s + 3) * 60}%`,
               }}
             />
           );
@@ -270,7 +310,7 @@ function GradientImage({ imageUrl, city, alt, onColorsExtracted }: GradientImage
       </div>
       
       {/* Real Image + City Name (shown on hover) */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out">
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ease-out">
         <img
           ref={imgRef}
           src={imageUrl}
