@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PhotoAlbum, fetchAlbums } from './PhotoAlbum';
 import type { MonthAlbum } from './PhotoAlbum';
-import { CloudSun } from 'lucide-react';
+import { CloudSun, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog } from 'lucide-react';
 
 interface Sparkle {
   id: number;
@@ -11,9 +11,26 @@ interface Sparkle {
   opacity: number;
 }
 
+interface WeatherData {
+  temperature: number;
+  weatherCode: number;
+}
+
+function getWeatherIcon(code: number) {
+  if (code === 0) return <Sun className="w-5 h-5" />;
+  if (code <= 3) return <CloudSun className="w-5 h-5" />;
+  if (code <= 48) return <CloudFog className="w-5 h-5" />;
+  if (code <= 67) return <CloudRain className="w-5 h-5" />;
+  if (code <= 77) return <CloudSnow className="w-5 h-5" />;
+  if (code <= 82) return <CloudRain className="w-5 h-5" />;
+  if (code <= 99) return <CloudLightning className="w-5 h-5" />;
+  return <Cloud className="w-5 h-5" />;
+}
+
 export function LandingPage() {
   const [albums, setAlbums] = useState<MonthAlbum[]>([]);
   const [sparkles, setSparkles] = useState<Sparkle[]>([]);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   
 
   const createSparkle = useCallback((x: number, y: number) => {
@@ -53,24 +70,43 @@ export function LandingPage() {
     fetchAlbums().then(setAlbums);
   }, []);
 
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const res = await fetch(
+          'https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,weather_code'
+        );
+        const data = await res.json();
+        setWeather({
+          temperature: Math.round(data.current.temperature_2m),
+          weatherCode: data.current.weather_code,
+        });
+      } catch (err) {
+        console.error('Failed to fetch weather:', err);
+      }
+    };
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 600000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Subtle Gradient Background */}
+      {/* Calm Night Sky Background */}
       <div 
         className="fixed inset-0 -z-10"
         style={{
-          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(168, 85, 247, 0.06) 25%, rgba(251, 191, 36, 0.05) 50%, rgba(249, 115, 22, 0.07) 75%, rgba(59, 130, 246, 0.08) 100%)',
-          backgroundSize: '400% 400%',
-          animation: 'subtle-gradient 25s ease-in-out infinite',
+          background: 'radial-gradient(ellipse 120% 80% at 50% 20%, rgba(56, 100, 180, 0.15) 0%, rgba(30, 58, 108, 0.08) 40%, transparent 70%)',
+          filter: 'blur(60px)',
         }}
       />
       
-      {/* Additional subtle layer for depth */}
+      {/* Secondary soft glow */}
       <div 
-        className="fixed inset-0 -z-10 opacity-60"
+        className="fixed inset-0 -z-10"
         style={{
-          background: 'radial-gradient(ellipse at top left, rgba(59, 130, 246, 0.05) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(249, 115, 22, 0.04) 0%, transparent 50%)',
-          animation: 'subtle-gradient 30s ease-in-out infinite reverse',
+          background: 'radial-gradient(ellipse 100% 60% at 30% 80%, rgba(45, 85, 150, 0.06) 0%, transparent 50%), radial-gradient(ellipse 80% 50% at 80% 30%, rgba(70, 120, 200, 0.04) 0%, transparent 50%)',
+          filter: 'blur(80px)',
         }}
       />
 
@@ -106,7 +142,7 @@ export function LandingPage() {
           <header className="flex items-start justify-between mb-16">
             <div>
               <h1 
-                className="text-5xl md:text-7xl font-bold mb-3 tracking-tight drop-shadow-2xl bg-clip-text text-transparent"
+                className="text-5xl md:text-7xl font-bold mb-3 tracking-tight drop-shadow-2xl bg-clip-text text-transparent pb-1"
                 style={{
                   backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(186,230,253,0.9) 40%, rgba(251,207,232,0.9) 70%, rgba(255,255,255,0.95) 100%)',
                 }}
@@ -129,6 +165,29 @@ export function LandingPage() {
           </header>
 
           <PhotoAlbum albums={albums} />
+
+          {/* Footer */}
+          <footer className="mt-20 py-8 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <p className="text-zinc-400 text-sm">
+                Created by sunset lover,{' '}
+                <a
+                  href="https://x.com/charmiekapoor"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-zinc-300 hover:underline underline-offset-2 transition-colors"
+                >
+                  Charmie Kapoor
+                </a>
+              </p>
+              {weather && (
+                <div className="flex items-center gap-2 text-zinc-400 text-sm">
+                  {getWeatherIcon(weather.weatherCode)}
+                  <span>{weather.temperature}°C in Bangalore</span>
+                </div>
+              )}
+            </div>
+          </footer>
         </div>
       </div>
     </div>

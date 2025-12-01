@@ -72,9 +72,9 @@ export function ImageUploader({ onColorsExtracted }: ImageUploaderProps) {
       onDragLeave={handleDragLeave}
       className={`
         cursor-pointer transition-all duration-300 border-2 border-dashed h-full min-h-[500px]
-        flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm
+        flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm rounded-[6px]
         ${isDragging 
-          ? 'border-violet-500 bg-violet-500/10' 
+          ? 'border-zinc-400 bg-zinc-500/10' 
           : 'border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/50'
         }
       `}
@@ -91,11 +91,11 @@ export function ImageUploader({ onColorsExtracted }: ImageUploaderProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 flex items-center justify-center">
+            <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-zinc-600/20 to-zinc-700/20 border border-zinc-500/30 flex items-center justify-center">
               {isDragging ? (
-                <Upload className="w-10 h-10 text-violet-400" />
+                <Upload className="w-10 h-10 text-zinc-400" />
               ) : (
-                <ImageIcon className="w-10 h-10 text-violet-400" />
+                <ImageIcon className="w-10 h-10 text-zinc-400" />
               )}
             </div>
             <div>

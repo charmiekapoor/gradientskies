@@ -9,6 +9,18 @@ export function saturateColor(rgb: RGB, amount: number = 15): RGB {
   return hslToRgb([h, newS, l]);
 }
 
+export function boostColor(rgb: RGB, saturationBoost: number = 15, brightnessBoost: number = 15, vibrancy: number = 10): RGB {
+  const [h, s, l] = rgbToHsl(rgb);
+  // Increase saturation
+  const newS = Math.min(100, s + saturationBoost);
+  // Increase brightness but cap at 85 to avoid washing out
+  const newL = Math.min(85, Math.max(20, l + brightnessBoost));
+  // Vibrancy: push saturation more for already saturated colors
+  const vibrancyBoost = s > 40 ? vibrancy * (s / 100) : 0;
+  const finalS = Math.min(100, newS + vibrancyBoost);
+  return hslToRgb([h, finalS, newL]);
+}
+
 export function getColorName(rgb: RGB): string {
   const [h, s, l] = rgbToHsl(rgb);
   
