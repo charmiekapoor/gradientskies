@@ -14,22 +14,28 @@ interface WeatherData {
   temperature: number;
   weatherCode: number;
   sunset: string;
-  minsToSunset: number;
+  secsToSunset: number;
+  isTomorrow: boolean;
 }
 
 function getWeatherIcon() {
   return <Cloud className="w-5 h-5 text-zinc-400" />;
 }
 
-function formatTimeToSunset(mins: number): string {
-  const totalMins = Math.max(0, mins);
-  const hours = Math.floor(totalMins / 60);
-  const remainingMins = totalMins % 60;
+function formatTimeToSunset(secs: number, isTomorrow: boolean): string {
+  const totalSecs = Math.max(0, secs);
+  const hours = Math.floor(totalSecs / 3600);
+  const mins = Math.floor((totalSecs % 3600) / 60);
+  const remainingSecs = totalSecs % 60;
+  const suffix = isTomorrow ? 'to next sunset' : 'to sunset';
   
   if (hours > 0) {
-    return `${hours}h ${remainingMins}m to sunset`;
+    return `${hours}h ${mins}m ${remainingSecs}s ${suffix}`;
   }
-  return `${totalMins} mins to sunset`;
+  if (mins > 0) {
+    return `${mins}m ${remainingSecs}s ${suffix}`;
+  }
+  return `${remainingSecs}s ${suffix}`;
 }
 
 export function LandingPage() {
@@ -87,12 +93,14 @@ export function LandingPage() {
         
         // Always use next upcoming sunset
         let targetSunset = todaySunsetDate;
+        let isTomorrow = false;
         if (now.getTime() >= todaySunsetDate.getTime()) {
           targetSunset = tomorrowSunsetDate;
+          isTomorrow = true;
         }
         
         const diffMs = targetSunset.getTime() - now.getTime();
-        const minsToSunset = Math.max(0, Math.round(diffMs / 60000));
+        const secsToSunset = Math.max(0, Math.round(diffMs / 1000));
         
         // Format the next sunset time in AM/PM
         const sunsetFormatted = targetSunset.toLocaleTimeString('en-US', {
@@ -105,14 +113,15 @@ export function LandingPage() {
           temperature: Math.round(data.current.temperature_2m),
           weatherCode: data.current.weather_code,
           sunset: sunsetFormatted,
-          minsToSunset: minsToSunset,
+          secsToSunset: secsToSunset,
+          isTomorrow: isTomorrow,
         });
       } catch (err) {
         console.error('Failed to fetch weather:', err);
       }
     };
     fetchWeather();
-    const interval = setInterval(fetchWeather, 60000); // Update every minute for countdown
+    const interval = setInterval(fetchWeather, 1000); // Update every second for countdown
     return () => clearInterval(interval);
   }, []);
 
@@ -235,7 +244,7 @@ export function LandingPage() {
                   <Sun className="w-5 h-5 text-zinc-400" />
                   <span>{weather.sunset}</span>
                   <span className="text-zinc-500">
-                    ({formatTimeToSunset(weather.minsToSunset)})
+                    ({formatTimeToSunset(weather.secsToSunset, weather.isTomorrow)})
                   </span>
                 </div>
               )}
@@ -272,7 +281,7 @@ export function LandingPage() {
                 <Sun className="w-5 h-5 text-zinc-400" />
                 <span className="whitespace-nowrap">{weather.sunset}</span>
                 <span className="text-zinc-500 whitespace-nowrap">
-                  ({formatTimeToSunset(weather.minsToSunset)})
+                  ({formatTimeToSunset(weather.secsToSunset, weather.isTomorrow)})
                 </span>
               </div>
             )}

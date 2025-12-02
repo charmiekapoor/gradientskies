@@ -25,7 +25,7 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
   const [activeColorIndices, setActiveColorIndices] = useState<number[]>([0, 1, 2, 3, 4]);
   const [blur, setBlur] = useState<number>(20);
   const [noise, setNoise] = useState<number>(50);
-  const [weather, setWeather] = useState<{ temperature: number; weatherCode: number; sunset: string; minsToSunset: number } | null>(null);
+  const [weather, setWeather] = useState<{ temperature: number; weatherCode: number; sunset: string; secsToSunset: number; isTomorrow: boolean } | null>(null);
   const [trailPoints, setTrailPoints] = useState<TrailPoint[]>([]);
   const trailRef = useRef<TrailPoint[]>([]);
 
@@ -62,18 +62,27 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
     const fetchWeather = async () => {
       try {
         const res = await fetch(
-          'https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,weather_code&daily=sunset&timezone=Asia/Kolkata'
+          'https://api.open-meteo.com/v1/forecast?latitude=12.9716&longitude=77.5946&current=temperature_2m,weather_code&daily=sunset&timezone=Asia/Kolkata&forecast_days=2'
         );
         const data = await res.json();
         
-        const sunsetTime = data.daily?.sunset?.[0] || '';
-        const sunsetDate = new Date(sunsetTime);
+        const todaySunset = data.daily?.sunset?.[0] || '';
+        const tomorrowSunset = data.daily?.sunset?.[1] || '';
+        const todaySunsetDate = new Date(todaySunset);
+        const tomorrowSunsetDate = new Date(tomorrowSunset);
         const now = new Date();
         
-        const diffMs = sunsetDate.getTime() - now.getTime();
-        const minsToSunset = Math.round(diffMs / 60000);
+        let targetSunset = todaySunsetDate;
+        let isTomorrow = false;
+        if (now.getTime() >= todaySunsetDate.getTime()) {
+          targetSunset = tomorrowSunsetDate;
+          isTomorrow = true;
+        }
         
-        const sunsetFormatted = sunsetDate.toLocaleTimeString('en-US', {
+        const diffMs = targetSunset.getTime() - now.getTime();
+        const secsToSunset = Math.max(0, Math.round(diffMs / 1000));
+        
+        const sunsetFormatted = targetSunset.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
           hour12: true,
@@ -83,14 +92,15 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
           temperature: Math.round(data.current.temperature_2m),
           weatherCode: data.current.weather_code,
           sunset: sunsetFormatted,
-          minsToSunset: minsToSunset,
+          secsToSunset: secsToSunset,
+          isTomorrow: isTomorrow,
         });
       } catch {
         // ignore
       }
     };
     fetchWeather();
-    const interval = setInterval(fetchWeather, 60000);
+    const interval = setInterval(fetchWeather, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -261,11 +271,16 @@ export function GradientExtractor({ onBack }: GradientExtractorProps) {
                 <Sun className="w-5 h-5 text-zinc-400" />
                 <span>{weather.sunset}</span>
                 <span className="text-zinc-500 whitespace-nowrap">
-                  ({weather.minsToSunset > 0 
-                    ? `${weather.minsToSunset} mins to sunset`
-                    : weather.minsToSunset > -60 
-                      ? 'sunset now!' 
-                      : 'after sunset'})
+                  ({(() => {
+                    const totalSecs = Math.max(0, weather.secsToSunset);
+                    const hours = Math.floor(totalSecs / 3600);
+                    const mins = Math.floor((totalSecs % 3600) / 60);
+                    const secs = totalSecs % 60;
+                    const suffix = weather.isTomorrow ? 'to next sunset' : 'to sunset';
+                    if (hours > 0) return `${hours}h ${mins}m ${secs}s ${suffix}`;
+                    if (mins > 0) return `${mins}m ${secs}s ${suffix}`;
+                    return `${secs}s ${suffix}`;
+                  })()})
                 </span>
               </div>
             )}
